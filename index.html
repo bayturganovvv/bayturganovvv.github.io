@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>DataMind shaxsiy</title>
+<link rel="shortcut icon" href="data1.png" type="image/x-icon">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+/* ══════════════════════════════════════════
+   VARIABLES & RESET
+══════════════════════════════════════════ */
+:root {
+  --bg: #02020a;
+  --s1: #07080f;
+  --s2: #0b0d16;
+  --s3: #10121e;
+  --s4: #161828;
+  --s5: #1c1f32;
+  --acc: #e8622a;
+  --acc2: #ff8c5a;
+  --acc3: rgba(232,98,42,0.1);
+  --acc4: rgba(232,98,42,0.06);
+  --blue: #3b82f6;
+  --cyan: #06b6d4;
+  --green: #10b981;
+  --gold: #f59e0b;
+  --purple: #8b5cf6;
+  --pink: #ec4899;
+  --red: #ef4444;
+  --t1: #f8fafc;
+  --t2: #e2e8f0;
+  --t3: #94a3b8;
+  --t4: #64748b;
+  --t5: #475569;
+  --br: rgba(255,255,255,0.055);
+  --br2: rgba(255,255,255,0.1);
+  --br3: rgba(255,255,255,0.15);
+  --sw: 200px;
+  --top: 52px;
+  --r4: 4px;
+  --r8: 8px;
+  --r12: 12px;
+  --r16: 16px;
+  --r20: 20px;
+  --r24: 24px;
+  --font: 'Bricolage Grotesque', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 16px; scroll-behavior: smooth; height: 100%; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--t1);
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-font-smoothing: antialiased;
+}
+input, textarea, select, button { font-family: var(--font); }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+/* CURSOR */
+#cur { position:fixed;width:7px;height:7px;background:var(--acc);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:transform .1s; }
+#curR { position:fixed;width:24px;height:24px;border:1.5px solid rgba(232,98,42,.38);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%); }
+@media (hover:none) { #cur, #curR { display:none; } }
+
+/* BG CANVAS */
+#bgc { position:fixed;inset:0;z-index:0;pointer-events:none; }
+
+/* ══════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════ */
+.app { position:relative;z-index:1;display:flex;min-height:100vh; }
+
+/* SIDEBAR */
+.sb {
+  position: fixed; left: 0; top: 0;
+  width: var(--sw); height: 100vh;
+  background: rgba(4,4,12,0.97);
+  border-right: 1px solid var(--br);
+  display: flex; flex-direction: column; align-items: flex-start;
+  padding: 16px 10px 12px; gap: 2px;
+  backdrop-filter: blur(20px);
+  z-index: 200;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.sb::-webkit-scrollbar { width: 3px; }
+.sb::-webkit-scrollbar-thumb { background: var(--br); border-radius: 2px; }
+
+.sb-logo {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--acc), #a03010);
+  border-radius: 10px;
+  display: flex; align-items:center; justify-content:center;
+  font-weight: 800; font-size: 15px; color: #fff;
+  margin-bottom: 18px; flex-shrink: 0; margin-left: 4px;
+  box-shadow: 0 4px 16px rgba(232,98,42,.3);
+}
+
+.nav-btn {
+  width: 100%;
+  border-radius: 9px;
+  display: flex; align-items:center; gap: 10px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+  transition: all .18s;
+  padding: 0 12px;
+  height: 38px;
+}
+.nav-btn:hover, .nav-btn.on {
+  background: var(--acc3);
+  border-color: rgba(232,98,42,.25);
+}
+.nb-icon { font-size:16px; flex-shrink:0; width:18px; text-align:center; line-height:1; }
+.nb-label {
+  font-size: 12.5px; font-weight: 600;
+  color: var(--t3);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.nav-btn:hover .nb-label, .nav-btn.on .nb-label { color: var(--acc2); }
+.sb-divider { width: 80%; height:1px; background:var(--br); margin: 5px auto; }
+
+/* MAIN */
+.main { margin-left: var(--sw); flex:1; display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; }
+
+/* TOPBAR */
+.topbar {
+  height: var(--top);
+  background: rgba(2,2,10,.97);
+  border-bottom: 1px solid var(--br);
+  backdrop-filter: blur(20px);
+  display: flex; align-items:center; justify-content:space-between;
+  padding: 0 20px;
+  position: sticky; top: 0; z-index: 100;
+  gap: 12px;
+}
+.tb-left { display:flex; align-items:center; gap:12px; min-width:0; }
+.tb-logo { font-size:15px; font-weight:800; letter-spacing:-.3px; white-space:nowrap; }
+.tb-logo em { color:var(--acc); font-style:normal; }
+.tb-crumb { font-size:11px; font-family:var(--mono); color:var(--t4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tb-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+
+/* HAMBURGER (mobile) */
+.hamburger { display:none; flex-direction:column; gap:4px; cursor:pointer; padding:6px; }
+.hamburger span { width:18px; height:2px; background:var(--t3); border-radius:1px; transition:all .2s; }
+
+/* SECTIONS */
+.sec { display:none; padding:20px; animation:fadeUp .28s ease; }
+.sec.on { display:block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* ══════════════════════════════════════════
+   COMPONENTS
+══════════════════════════════════════════ */
+/* Section Header */
+.sh { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.sh h3 { font-size:11px; font-family:var(--mono); color:var(--t4); text-transform:uppercase; letter-spacing:1.5px; white-space:nowrap; }
+.sh .ln { flex:1; height:1px; background:var(--br); }
+.sh .bdg { font-size:10px; font-family:var(--mono); background:var(--s3); border:1px solid var(--br); color:var(--t4); padding:2px 7px; border-radius:4px; white-space:nowrap; }
+
+/* KPI Grid */
+.kgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:11px; margin-bottom:16px; }
+.kpi { border-radius:var(--r14); padding:16px 18px; position:relative; overflow:hidden; transition:transform .18s, box-shadow .18s; cursor:default; }
+.kpi:hover { transform:translateY(-2px); }
+.kpi::after { content:''; position:absolute; top:-16px; right:-16px; width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,.06); }
+.ko { background:linear-gradient(135deg,#e8622a,#a03010); }
+.kb { background:linear-gradient(135deg,#1e3a8a,#3b82f6); }
+.kg { background:linear-gradient(135deg,#064e3b,#10b981); }
+.kp { background:linear-gradient(135deg,#3b0764,#8b5cf6); }
+.kc { background:linear-gradient(135deg,#164e63,#06b6d4); }
+.kgd { background:linear-gradient(135deg,#78350f,#f59e0b); }
+.kd { background:var(--s3); border:1px solid var(--br); }
+.kl { font-size:10px; font-family:var(--mono); opacity:.7; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:5px; }
+.kv { font-size:1.65rem; font-weight:800; letter-spacing:-.8px; line-height:1; }
+.ks { font-size:11px; opacity:.6; margin-top:4px; font-family:var(--mono); }
+.kt { position:absolute; top:12px; right:12px; font-size:9px; font-family:var(--mono); font-weight:700; padding:2px 6px; border-radius:3px; }
+.kt-u { background:rgba(16,185,129,.22); color:#6ee7b7; }
+.kt-d { background:rgba(239,68,68,.22); color:#fca5a5; }
+
+/* Cards */
+.card { background:var(--s2); border:1px solid var(--br); border-radius:var(--r16); transition:border-color .18s; }
+.card:hover { border-color:var(--br2); }
+.ch { display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border-bottom:1px solid var(--br); }
+.ch h4 { font-size:13px; font-weight:700; }
+.ch p { font-size:11px; font-family:var(--mono); color:var(--t4); }
+.cb { padding:16px; }
+
+/* Chart Card */
+.cc { background:var(--s2); border:1px solid var(--br); border-radius:var(--r16); padding:16px; transition:border-color .18s; }
+.cc:hover { border-color:var(--br2); }
+.cc .ct { font-size:13px; font-weight:700; }
+.cc .cs { font-size:11px; font-family:var(--mono); color:var(--t4); margin-bottom:12px; margin-top:2px; }
+.cc canvas { max-height:190px; }
+
+/* Grids */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
+.g12 { display:grid; grid-template-columns:1.55fr 1fr; gap:12px; margin-bottom:12px; }
+.g21 { display:grid; grid-template-columns:1fr 1.55fr; gap:12px; margin-bottom:12px; }
+.gmb { margin-bottom:12px; }
+
+/* Chips */
+.chip { display:inline-flex; align-items:center; gap:3px; padding:2px 7px; border-radius:4px; font-size:10px; font-weight:700; font-family:var(--mono); letter-spacing:.3px; }
+.c-og { background:rgba(232,98,42,.12); color:var(--acc2); }
+.c-bl { background:rgba(59,130,246,.12); color:#93c5fd; }
+.c-gr { background:rgba(16,185,129,.12); color:#6ee7b7; }
+.c-gd { background:rgba(245,158,11,.15); color:#fcd34d; }
+.c-pu { background:rgba(139,92,246,.12); color:#c4b5fd; }
+.c-cy { background:rgba(6,182,212,.12); color:#67e8f9; }
+.c-pk { background:rgba(236,72,153,.12); color:#f9a8d4; }
+.c-rd { background:rgba(239,68,68,.12); color:#fca5a5; }
+.c-gy { background:rgba(100,116,139,.1); color:var(--t3); }
+
+/* Progress */
+.pg { height:3px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; margin-top:8px; }
+.pgf { height:100%; border-radius:2px; transition:width 1s ease; }
+
+/* Buttons */
+.btn { padding:8px 14px; border-radius:var(--r8); border:none; cursor:pointer; font-size:12.5px; font-weight:600; display:inline-flex; align-items:center; gap:6px; transition:all .18s; white-space:nowrap; font-family:var(--font); }
+.btn-acc { background:linear-gradient(135deg,var(--acc),#a03010); color:#fff; box-shadow:0 3px 12px rgba(232,98,42,.25); }
+.btn-acc:hover { transform:translateY(-1px); box-shadow:0 5px 18px rgba(232,98,42,.35); }
+.btn-ghost { background:rgba(255,255,255,.04); border:1px solid var(--br); color:var(--t3); }
+.btn-ghost:hover { border-color:var(--br2); color:var(--t1); }
+.btn-red { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.22); color:#fca5a5; }
+.btn-red:hover { background:rgba(239,68,68,.18); }
+.btn-green { background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.22); color:#6ee7b7; }
+.btn-green:hover { background:rgba(16,185,129,.18); }
+.btn-blue { background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.22); color:#93c5fd; }
+.btn-blue:hover { background:rgba(59,130,246,.18); }
+
+/* Form */
+.fg { margin-bottom:13px; }
+.fl { display:block; font-size:11px; font-family:var(--mono); color:var(--t4); margin-bottom:6px; letter-spacing:.3px; }
+.fi { width:100%; background:rgba(255,255,255,.04); border:1px solid var(--br); border-radius:var(--r8); padding:10px 12px; color:var(--t1); font-size:13px; outline:none; transition:border-color .18s; }
+.fi:focus { border-color:var(--acc); background:rgba(232,98,42,.04); }
+.fi::placeholder { color:var(--t5); }
+textarea.fi { resize:vertical; min-height:80px; line-height:1.6; font-family:var(--font); }
+select.fi { cursor:pointer; }
+
+/* Table */
+.tw { overflow-x:auto; max-height:600px; overflow-y:auto; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th { position:sticky; top:0; background:#070810; padding:9px 13px; text-align:left; font-family:var(--mono); font-size:10px; color:var(--t4); letter-spacing:.8px; text-transform:uppercase; border-bottom:1px solid var(--br); white-space:nowrap; }
+tbody tr { border-bottom:1px solid rgba(255,255,255,.03); transition:background .13s; }
+tbody tr:hover { background:rgba(232,98,42,.04); }
+tbody td { padding:8px 13px; font-family:var(--mono); font-size:11px; color:var(--t2); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* Empty */
+.emp { text-align:center; padding:50px 16px; }
+.emp .ei { font-size:42px; margin-bottom:10px; opacity:.3; display:block; }
+.emp p { font-size:12px; font-family:var(--mono); color:var(--t4); }
+
+/* Notification */
+#notif { position:fixed; top:62px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:6px; max-width:300px; }
+.nitem { background:#0c0e1c; border:1px solid var(--br2); border-radius:var(--r10); padding:11px 14px; font-size:12.5px; display:flex; align-items:center; gap:8px; box-shadow:0 8px 24px rgba(0,0,0,.5); animation:nIn .25s ease; }
+@keyframes nIn { from{opacity:0;transform:translateX(12px)} to{opacity:1;transform:translateX(0)} }
+
+/* Drop Zone */
+.dz { border:2px dashed rgba(232,98,42,.28); border-radius:var(--r16); padding:40px 24px; text-align:center; cursor:pointer; transition:all .25s; background:rgba(232,98,42,.02); position:relative; overflow:hidden; }
+.dz::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at center,rgba(232,98,42,.07) 0%,transparent 65%); opacity:0; transition:opacity .25s; }
+.dz:hover::before, .dz.drag::before { opacity:1; }
+.dz:hover, .dz.drag { border-color:var(--acc); transform:scale(1.005); }
+.dz-icon { font-size:44px; margin-bottom:12px; display:block; animation:fl 3s ease-in-out infinite; }
+@keyframes fl { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.dz h3 { font-size:15px; font-weight:700; margin-bottom:6px; }
+.dz p { font-size:12px; font-family:var(--mono); color:var(--t4); }
+
+/* Banner */
+.banner { background:linear-gradient(135deg,rgba(232,98,42,.1),rgba(139,92,246,.07)); border:1px solid rgba(232,98,42,.2); border-radius:var(--r16); padding:18px 22px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.banner h3 { font-size:14px; font-weight:700; margin-bottom:3px; }
+.banner p { font-size:12px; font-family:var(--mono); color:var(--t3); }
+
+/* Save info box */
+.save-info { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.2); border-radius:var(--r12); padding:12px 16px; margin-bottom:16px; display:flex; align-items:flex-start; gap:10px; }
+.save-info p { font-size:12px; font-family:var(--mono); color:var(--t3); line-height:1.6; }
+
+/* ══════════════════════════════════════════
+   NOTEBOOK
+══════════════════════════════════════════ */
+.nb-wrap { display:grid; grid-template-columns:220px 1fr; border:1px solid var(--br); border-radius:var(--r20); overflow:hidden; background:var(--s1); min-height:560px; }
+.nb-sidebar { border-right:1px solid var(--br); display:flex; flex-direction:column; background:var(--s1); min-height:560px; }
+.nb-stop { padding:12px; border-bottom:1px solid var(--br); display:flex; gap:7px; }
+.nb-stop input { flex:1; background:rgba(255,255,255,.04); border:1px solid var(--br); border-radius:6px; padding:7px 10px; color:var(--t1); font-size:11.5px; font-family:var(--mono); outline:none; min-width:0; }
+.nb-stop input:focus { border-color:var(--acc); }
+.nb-add { background:var(--acc); border:none; border-radius:6px; width:30px; height:30px; cursor:pointer; font-size:18px; color:#fff; flex-shrink:0; transition:all .18s; display:flex; align-items:center; justify-content:center; }
+.nb-add:hover { transform:scale(1.08); box-shadow:0 3px 12px rgba(232,98,42,.35); }
+.nb-list { flex:1; overflow-y:auto; padding:7px; }
+.nb-item { padding:10px 11px; border-radius:var(--r10); cursor:pointer; transition:all .16s; border:1px solid transparent; margin-bottom:3px; }
+.nb-item:hover { background:var(--s3); border-color:var(--br); }
+.nb-item.act { background:var(--acc3); border-color:rgba(232,98,42,.25); }
+.nb-it { font-size:12.5px; font-weight:600; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.nb-id { font-size:10px; font-family:var(--mono); color:var(--t4); }
+.nb-ip { font-size:11px; color:var(--t4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+.nb-itag { display:inline-block; font-size:9px; font-family:var(--mono); padding:1px 5px; border-radius:3px; margin-top:4px; font-weight:700; }
+.nb-count { padding:8px 14px; border-top:1px solid var(--br); font-size:10px; font-family:var(--mono); color:var(--t4); text-align:center; }
+
+/* Editor */
+.nb-editor { display:flex; flex-direction:column; background:var(--s1); min-height:560px; }
+.nb-etop { padding:12px 16px; border-bottom:1px solid var(--br); display:flex; align-items:center; gap:8px; }
+.nb-etop input { flex:1; background:transparent; border:none; outline:none; color:var(--t1); font-size:17px; font-weight:700; min-width:0; }
+.nb-etop input::placeholder { color:var(--t5); }
+.nb-toolbar { padding:7px 12px; border-bottom:1px solid var(--br); display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
+.tb { padding:4px 9px; border-radius:5px; border:1px solid var(--br); background:transparent; color:var(--t3); font-size:11.5px; cursor:pointer; transition:all .15s; font-family:var(--mono); line-height:1; }
+.tb:hover { background:var(--acc3); border-color:rgba(232,98,42,.25); color:var(--acc2); }
+.nb-body { flex:1; padding:18px; overflow:auto; min-height:300px; }
+.nb-ta { width:100%; height:100%; min-height:300px; background:transparent; border:none; outline:none; color:var(--t2); font-size:14px; line-height:1.8; resize:none; font-family:var(--font); }
+.nb-ta::placeholder { color:var(--t5); }
+.nb-foot { padding:9px 16px; border-top:1px solid var(--br); display:flex; align-items:center; justify-content:space-between; }
+.nb-foot span { font-size:11px; font-family:var(--mono); color:var(--t4); }
+.nb-foot .saved { color:var(--green); }
+.nb-foot .saving { color:var(--gold); }
+.nb-empty { display:flex; align-items:center; justify-content:center; flex:1; padding:40px; }
+.nb-empty p { font-size:13px; font-family:var(--mono); color:var(--t4); text-align:center; line-height:1.7; }
+
+/* CSV file cards */
+.cf-card { display:flex; align-items:center; gap:12px; padding:12px 15px; background:var(--s2); border:1px solid var(--br); border-radius:var(--r14); margin-bottom:8px; transition:all .18s; cursor:pointer; }
+.cf-card:hover { border-color:var(--br2); background:var(--s3); }
+.cf-card.active { border-color:rgba(232,98,42,.35); background:var(--acc3); }
+.cf-icon { width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,var(--acc),#a03010); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.cf-info { flex:1; min-width:0; }
+.cf-name { font-size:13px; font-weight:600; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cf-meta { font-size:11px; font-family:var(--mono); color:var(--t4); }
+.cf-acts { display:flex; gap:5px; flex-shrink:0; }
+
+/* Col stats */
+.csg { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:10px; margin-bottom:14px; }
+.csc { background:var(--s2); border:1px solid var(--br); border-radius:var(--r14); padding:15px; transition:all .18s; }
+.csc:hover { border-color:rgba(232,98,42,.22); transform:translateY(-2px); }
+.csn { font-family:var(--mono); font-size:12px; color:var(--acc); margin-bottom:8px; font-weight:600; display:flex; align-items:center; gap:6px; }
+.csr { display:flex; justify-content:space-between; font-size:11px; font-family:var(--mono); padding:3px 0; border-bottom:1px solid rgba(255,255,255,.03); }
+.csr:last-of-type { border:none; }
+.csr span:first-child { color:var(--t4); }
+.csr span:last-child { color:var(--t2); font-weight:600; }
+
+/* Guide cards */
+.gcg { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:12px; margin-bottom:18px; }
+.gc { background:var(--s2); border:1px solid var(--br); border-radius:var(--r16); padding:20px; position:relative; overflow:hidden; transition:all .22s; }
+.gc:hover { transform:translateY(-3px); border-color:var(--br2); }
+.gc::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.gc:nth-child(1)::before { background:linear-gradient(90deg,var(--acc),var(--acc2)); }
+.gc:nth-child(2)::before { background:linear-gradient(90deg,#2563eb,#06b6d4); }
+.gc:nth-child(3)::before { background:linear-gradient(90deg,#8b5cf6,#ec4899); }
+.gc:nth-child(4)::before { background:linear-gradient(90deg,#10b981,#06b6d4); }
+.gc:nth-child(5)::before { background:linear-gradient(90deg,#f59e0b,#ef4444); }
+.gc:nth-child(6)::before { background:linear-gradient(90deg,#ec4899,#8b5cf6); }
+.gc-icon { font-size:24px; margin-bottom:11px; }
+.gc h3 { font-size:14px; font-weight:700; margin-bottom:7px; }
+.gc > p { font-size:12px; color:var(--t3); line-height:1.65; font-family:var(--mono); }
+.gs { display:flex; flex-direction:column; gap:5px; margin-top:12px; }
+.gsi { display:flex; align-items:flex-start; gap:7px; font-size:11.5px; font-family:var(--mono); color:var(--t3); line-height:1.5; }
+.gsn { min-width:16px; height:16px; border-radius:3px; background:var(--acc3); color:var(--acc); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; flex-shrink:0; margin-top:1px; }
+
+/* SQL */
+.sql-b { background:#07091a; border:1px solid var(--br); border-left:3px solid var(--blue); border-radius:var(--r10); padding:15px 16px; margin-bottom:11px; position:relative; }
+.sql-lbl { font-size:10px; font-family:var(--mono); color:#93c5fd; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:9px; }
+.sql-b pre { font-family:var(--mono); font-size:12px; line-height:1.85; overflow-x:auto; color:#abb2bf; }
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.cm{color:#5c6370;font-style:italic}.num{color:#d19a66}
+.cp-btn { position:absolute; top:9px; right:11px; background:rgba(59,130,246,.12); border:1px solid rgba(59,130,246,.25); color:#93c5fd; padding:3px 9px; border-radius:4px; font-size:10px; font-family:var(--mono); cursor:pointer; transition:all .18s; }
+.cp-btn:hover { background:rgba(59,130,246,.25); }
+
+/* Checklist */
+.ckg { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; }
+.ckc { background:var(--s2); border:1px solid var(--br); border-radius:var(--r16); padding:18px; }
+.ckc h4 { font-size:11px; font-family:var(--mono); color:var(--t4); letter-spacing:1.3px; text-transform:uppercase; margin-bottom:13px; padding-bottom:9px; border-bottom:1px solid var(--br); }
+.ci { display:flex; align-items:flex-start; gap:8px; padding:7px 0; cursor:pointer; transition:padding-left .16s; }
+.ci:hover { padding-left:4px; }
+.cbox { width:16px; height:16px; border:2px solid var(--br2); border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; transition:all .18s; margin-top:1px; }
+.ci.done .cbox { background:var(--green); border-color:var(--green); color:#000; }
+.ci.done .ctxt { text-decoration:line-through; color:var(--t4); }
+.ctxt { font-size:12.5px; color:var(--t3); line-height:1.4; }
+
+/* Salary */
+.sal { display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--s2); border:1px solid var(--br); border-radius:var(--r12); margin-bottom:7px; transition:all .16s; }
+.sal:hover { border-color:var(--br2); background:var(--s3); }
+.sal-lv { width:72px; flex-shrink:0; }
+.sal-ti { flex:1; font-size:13px; font-weight:600; }
+.sal-uz { width:110px; font-size:13px; font-weight:700; color:var(--green); text-align:right; flex-shrink:0; }
+.sal-in { width:110px; font-size:12px; font-family:var(--mono); color:var(--acc2); text-align:right; flex-shrink:0; }
+.sal-yr { width:52px; font-size:11px; font-family:var(--mono); color:var(--t4); text-align:right; flex-shrink:0; }
+
+/* Timeline */
+.tl { display:flex; flex-direction:column; }
+.tl-i { display:flex; gap:16px; padding:15px 0; border-bottom:1px solid var(--br); }
+.tl-i:last-child { border:none; }
+.tl-l { display:flex; flex-direction:column; align-items:center; flex-shrink:0; width:30px; }
+.tl-d { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; border:2px solid; font-weight:700; }
+.tl-ln { flex:1; width:2px; background:var(--br); margin-top:4px; min-height:16px; }
+.tl-c h4 { font-size:14px; font-weight:700; margin-bottom:5px; }
+.tl-c p { font-size:12px; color:var(--t3); line-height:1.6; font-family:var(--mono); }
+.tl-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .sb { display:none; position:fixed; z-index:300; }
+  .sb.mobile-open { display:flex; box-shadow: 4px 0 24px rgba(0,0,0,.5); }
+  .main { margin-left:0; }
+  .hamburger { display:flex; }
+  .g2, .g3, .g12, .g21 { grid-template-columns:1fr; }
+  .kgrid { grid-template-columns:repeat(2,1fr); }
+  .nb-wrap { grid-template-columns:1fr; }
+  .nb-sidebar { border-right:none; border-bottom:1px solid var(--br); max-height:200px; }
+  .nb-wrap.nb-editing .nb-sidebar { display:none; }
+  .sal-in, .sal-yr { display:none; }
+}
+@media (max-width: 480px) {
+  .sec { padding:14px; }
+  .topbar { padding:0 14px; }
+  .kgrid { grid-template-columns:1fr 1fr; }
+  .kv { font-size:1.4rem; }
+  .banner { flex-direction:column; align-items:flex-start; }
+  .banner button { width:100%; justify-content:center; }
+  .gcg { grid-template-columns:1fr; }
+  .ckg { grid-template-columns:1fr; }
+  .g2 { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="curR"></div>
+<canvas id="bgc"></canvas>
+<div id="notif"></div>
+
+<div class="app">
+<!-- ═══ SIDEBAR ═══ -->
+<nav class="sb" id="sb">
+  <div class="sb-logo">D</div>
+  <div class="nav-btn on"  onclick="go('dash')"      data-s="dash">      <span class="nb-icon">🏠</span><span class="nb-label">Dashboard</span></div>
+  <div class="nav-btn"     onclick="go('csv')"       data-s="csv">       <span class="nb-icon">📂</span><span class="nb-label">CSV Fayllar</span></div>
+  <div class="nav-btn"     onclick="go('analysis')"  data-s="analysis">  <span class="nb-icon">🔬</span><span class="nb-label">Tahlil</span></div>
+  <div class="nav-btn"     onclick="go('charts')"    data-s="charts">    <span class="nb-icon">📊</span><span class="nb-label">Grafiklar</span></div>
+  <div class="sb-divider"></div>
+  <div class="nav-btn"     onclick="go('notebook')"  data-s="notebook">  <span class="nb-icon">📒</span><span class="nb-label">Daftarcha</span></div>
+  <div class="sb-divider"></div>
+  <div class="nav-btn"     onclick="go('guide')"     data-s="guide">     <span class="nb-icon">📚</span><span class="nb-label">Qo'llanma</span></div>
+  <div class="nav-btn"     onclick="go('roadmap')"   data-s="roadmap">   <span class="nb-icon">🗺️</span><span class="nb-label">Yo'l Xarita</span></div>
+  <div class="nav-btn"     onclick="go('salary')"    data-s="salary">    <span class="nb-icon">💰</span><span class="nb-label">Oyliklar</span></div>
+  <div class="nav-btn"     onclick="go('sql')"       data-s="sql">       <span class="nb-icon">🗄️</span><span class="nb-label">SQL</span></div>
+  <div class="nav-btn"     onclick="go('checklist')" data-s="checklist"> <span class="nb-icon">✅</span><span class="nb-label">Checklist</span></div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="hamburger" id="hbg" onclick="toggleSb()">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="tb-logo">Data<em>Mind</em></div>
+      <span class="tb-crumb" id="crumb">// Dashboard</span>
+    </div>
+    <div class="tb-right">
+      <span id="tdate" style="font-size:11px;font-family:var(--mono);color:var(--t4);display:none"></span>
+      <button class="btn btn-ghost" style="font-size:12px;padding:6px 11px" onclick="go('notebook')">📒 Daftar</button>
+      <button class="btn btn-acc" style="padding:7px 13px;font-size:12px" onclick="document.getElementById('csvI').click()">📂 CSV</button>
+      <input type="file" id="csvI" accept=".csv,.tsv" style="display:none" onchange="handleCSV(event)">
+      <div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0" title="Online"></div>
+    </div>
+  </div>
+
+  <!-- ════ DASHBOARD ════ -->
+  <div id="s-dash" class="sec on">
+    <div class="banner" id="upBnr">
+      <div><h3>👋 DataMind Workspace — Xush kelibsiz!</h3><p>CSV faylni yuklang · Daftarchaga yozing · Tahlil qiling</p></div>
+      <button class="btn btn-acc" onclick="document.getElementById('csvI').click()">📂 CSV Yuklash</button>
+    </div>
+
+    <!-- Auto insights -->
+    <div id="dashInsights" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+    <div class="kgrid">
+      <div class="kpi ko"><div class="kl">CSV Qatorlar</div><div class="kv" id="kv1">—</div><div class="ks">rows</div></div>
+      <div class="kpi kb"><div class="kl">Ustunlar</div><div class="kv" id="kv2">—</div><div class="ks">columns</div></div>
+      <div class="kpi kg"><div class="kl">To'liqlik</div><div class="kv" id="kv3">—%</div><div class="ks">completeness</div></div>
+      <div class="kpi kp"><div class="kl">Raqamli</div><div class="kv" id="kv4">—</div><div class="ks">numeric cols</div></div>
+      <div class="kpi kc"><div class="kl">Daftarlar</div><div class="kv" id="kv5">0</div><div class="ks">notes saved</div></div>
+      <div class="kpi kgd"><div class="kl">CSV Fayllar</div><div class="kv" id="kv6">0</div><div class="ks">saved</div></div>
+    </div>
+    <div class="g12">
+      <div class="cc"><div class="ct" id="ct1">Ma'lumot Tahlili</div><div class="cs" id="cs1">CSV yuklang</div><canvas id="ch1"></canvas></div>
+      <div class="cc"><div class="ct" id="ct2">Taqsimot</div><div class="cs">Kategoriyalar</div><canvas id="ch2"></canvas></div>
+    </div>
+    <div class="g2">
+      <div class="cc"><div class="ct" id="ct3">Histogram</div><div class="cs">Qiymatlar taqsimoti</div><canvas id="ch3"></canvas></div>
+      <div class="cc"><div class="ct" id="ct4">Scatter</div><div class="cs">Korrelyatsiya</div><canvas id="ch4"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ════ CSV FAYLLAR ════ -->
+  <div id="s-csv" class="sec">
+    <div class="save-info">
+      <span style="font-size:20px;flex-shrink:0">💾</span>
+      <p><strong style="color:var(--green)">CSV fayllar brauzeringizda saqlanadi.</strong> Sahifani yopib-ochsangiz ham yo'qolmaydi. Yuklagan barcha fayllaringiz shu yerda turadi. Tanlang → Tahlil qiling.</p>
+    </div>
+    <div class="dz gmb" id="dz" onclick="document.getElementById('csvI').click()">
+      <span class="dz-icon">📁</span>
+      <h3>CSV faylni bu yerga tashlang</h3>
+      <p>yoki bosib tanlang · .csv · .tsv</p>
+      <button class="btn btn-acc" style="margin-top:12px" onclick="event.stopPropagation();document.getElementById('csvI').click()">📂 Fayl tanlash</button>
+    </div>
+
+    <div class="sh">
+      <h3>Saqlangan Fayllar</h3><div class="ln"></div>
+      <span class="bdg" id="cfCount">0 ta</span>
+    </div>
+
+    <!-- Active file info + preview selector -->
+    <div id="activeFileBar" style="display:none;background:var(--s3);border:1px solid rgba(232,98,42,.25);border-radius:var(--r12);padding:14px 18px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:20px">📊</span>
+          <div>
+            <div id="afName" style="font-size:13px;font-weight:700;color:var(--acc2)"></div>
+            <div id="afMeta" style="font-size:11px;font-family:var(--mono);color:var(--t4);margin-top:1px"></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:11px;font-family:var(--mono);color:var(--t4)">Ko'rsatish:</span>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-ghost preview-btn" id="pb200" style="padding:5px 12px;font-size:11px" onclick="setPreview(200)">200</button>
+            <button class="btn btn-ghost preview-btn" id="pb500" style="padding:5px 12px;font-size:11px" onclick="setPreview(500)">500</button>
+            <button class="btn btn-ghost preview-btn" id="pbAll" style="padding:5px 12px;font-size:11px;background:var(--acc3);border-color:rgba(232,98,42,.3);color:var(--acc2)" onclick="setPreview(0)">Hammasi</button>
+          </div>
+          <button class="btn btn-acc" style="font-size:11px;padding:6px 13px" onclick="go('analysis')">🔬 Tahlil</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:6px 13px" onclick="go('charts')">📊 Grafiklar</button>
+        </div>
+      </div>
+      <!-- Mini preview table -->
+      <div id="miniPreview" style="margin-top:14px;border-radius:var(--r10);overflow:hidden;border:1px solid var(--br)">
+        <div id="miniTable"></div>
+      </div>
+    </div>
+
+    <div id="cfList"><div class="emp"><span class="ei">📂</span><p>Hali fayl yuklanmagan</p></div></div>
+  </div>
+
+  <!-- ════ TAHLIL ════ -->
+  <div id="s-analysis" class="sec">
+    <div class="sh"><h3>Ustunlar Statistikasi</h3><div class="ln"></div><span class="bdg" id="colCount">—</span></div>
+    <div id="statsGrid"><div class="emp"><span class="ei">🔬</span><p>CSV faylni yuklang</p></div></div>
+  </div>
+
+  <!-- ════ GRAFIKLAR ════ -->
+  <div id="s-charts" class="sec">
+    <div id="chartsA"><div class="emp"><span class="ei">📊</span><p>CSV faylni yuklang</p></div></div>
+  </div>
+
+  <!-- ════ DAFTARCHA ════ -->
+  <div id="s-notebook" class="sec" style="padding:14px 14px 0">
+    <div class="save-info" style="margin:14px 14px 0;border-radius:var(--r10)">
+      <span style="font-size:18px;flex-shrink:0">🔒</span>
+      <p><strong style="color:var(--green)">Daftarlar brauzeringizda (localStorage) saqlanadi.</strong> Sahifani yopib-ochsangiz ham yo'qolmaydi. Eksport qilib zaxira nusxa oling. Maksimal 500 ta daftar.</p>
+    </div>
+    <div class="nb-wrap" id="nbWrap">
+      <div class="nb-sidebar">
+        <div class="nb-stop">
+          <input type="text" id="nbSrch" placeholder="Qidirish..." oninput="filterNotes()">
+          <button class="nb-add" onclick="newNote()" title="Yangi daftar">+</button>
+        </div>
+        <div class="nb-list" id="nbList"></div>
+        <div class="nb-count" id="nbCount">0 daftar</div>
+      </div>
+      <div class="nb-editor" id="nbEd">
+        <div id="nbEmpty" class="nb-empty">
+          <p>Chapdan daftar tanlang<br>yoki <strong style="color:var(--acc)">+</strong> bosib yangi daftar oching</p>
+        </div>
+        <div id="nbEdContent" style="display:none;flex:1">
+          <div class="nb-etop">
+            <input type="text" id="nbTitle" placeholder="Daftar nomi..." oninput="autoSave()">
+            <select class="btn btn-ghost" id="nbTag" onchange="autoSave()" style="padding:5px 8px;font-size:12px;cursor:pointer">
+              <option value="">🏷️ Tag</option>
+              <option value="work">💼 Ish</option>
+              <option value="idea">💡 G'oya</option>
+              <option value="learn">📚 O'rganish</option>
+              <option value="sql">🗄️ SQL</option>
+              <option value="excel">📊 Excel</option>
+              <option value="goal">🎯 Maqsad</option>
+              <option value="result">✅ Natija</option>
+              <option value="problem">⚠️ Muammo</option>
+              <option value="note">📝 Qayd</option>
+            </select>
+            <button class="btn btn-red" style="padding:5px 9px;font-size:12px" onclick="delNote()">🗑️</button>
+            <button class="btn btn-blue" style="padding:5px 9px;font-size:12px" onclick="exportNote()">⬇️</button>
+          </div>
+          <div class="nb-toolbar">
+            <span style="font-size:10px;font-family:var(--mono);color:var(--t4)">Format:</span>
+            <button class="tb" onclick="ins('**','**')"><b>B</b></button>
+            <button class="tb" onclick="ins('*','*')"><i>I</i></button>
+            <button class="tb" onclick="ins('`','`')">code</button>
+            <button class="tb" onclick="ins('\n## ','')">H2</button>
+            <button class="tb" onclick="ins('\n### ','')">H3</button>
+            <button class="tb" onclick="ins('\n- ','')">list</button>
+            <button class="tb" onclick="ins('\n1. ','')">1.</button>
+            <button class="tb" onclick="ins('\n☐ ','')">todo</button>
+            <button class="tb" onclick="ins('\n> ','')">quote</button>
+            <button class="tb" onclick="ins('\n---\n','')">———</button>
+            <button class="tb" onclick="ins('📌 ','')">📌</button>
+            <button class="tb" onclick="ins('⚠️ ','')">⚠️</button>
+            <button class="tb" onclick="ins('✅ ','')">✅</button>
+            <button class="tb" onclick="ins('💡 ','')">💡</button>
+            <button class="tb" onclick="ins('🔑 ','')">🔑</button>
+            <button class="tb" onclick="ins('\n```sql\n','\n```')">SQL</button>
+          </div>
+          <div class="nb-body">
+            <textarea class="nb-ta" id="nbContent" placeholder="Fikrlaringizni yozing...
+
+📌 Maslahat: Bu daftarchani quyidagilar uchun ishlating:
+• Nima uchun data analytics sohasini tanladim?
+• Bugun nima o'rgandim?
+• Qanday muammoga duch keldim va qanday hal qildim?
+• SQL kodlarim va formulalarim
+• Ish natijalarim va xulosalarim
+• Maqsadlarim va rejalarm" oninput="autoSave()"></textarea>
+          </div>
+          <div class="nb-foot">
+            <span id="nbWc">0 so'z · 0 belgi</span>
+            <span id="nbStatus" class="saved">● Saqlandi</span>
+            <span id="nbTs"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export/Import buttons -->
+    <div style="display:flex;gap:8px;padding:0 14px 14px;flex-wrap:wrap">
+      <button class="btn btn-ghost" style="font-size:12px" onclick="exportAllNotes()">📦 Hammasini eksport qilish (.json)</button>
+      <button class="btn btn-ghost" style="font-size:12px" onclick="document.getElementById('importI').click()">📥 Import qilish</button>
+      <input type="file" id="importI" accept=".json" style="display:none" onchange="importNotes(event)">
+      <button class="btn btn-red" style="font-size:12px" onclick="clearAllNotes()">🗑️ Hammasini o'chirish</button>
+    </div>
+  </div>
+
+  <!-- ════ QO'LLANMA ════ -->
+  <div id="s-guide" class="sec">
+    <div class="banner" style="margin-bottom:16px">
+      <div><h3>📊 Data Analyst nima qiladi?</h3><p>Ma'lumotlardan ma'no topib, biznes qarorlarini qabul qilishga yordam beradi. Har kuni SQL, Excel, Python ishlatadilar.</p></div>
+    </div>
+    <div class="sh"><h3>Ish Jarayoni — 6 Bosqich</h3><div class="ln"></div></div>
+    <div class="gcg">
+      <div class="gc"><div class="gc-icon">🎯</div><h3>1. Vazifani Tushunish</h3><p>Har qanday tahlildan oldin maqsad aniq bo'lishi shart.</p><div class="gs"><div class="gsi"><div class="gsn">1</div>"Bu tahlildan qanday qaror qabul qilinadi?" de</div><div class="gsi"><div class="gsn">2</div>Natija formati va muddatni aniqla</div><div class="gsi"><div class="gsn">3</div>Rahbar bilan tasdiqlat</div></div></div>
+      <div class="gc"><div class="gc-icon">🗄️</div><h3>2. Ma'lumot Yig'ish</h3><p>To'g'ri manbadan to'g'ri ma'lumotni olish — muvaffaqiyatning 50%i.</p><div class="gs"><div class="gsi"><div class="gsn">1</div>SQL yoki Excel orqali bazadan ol</div><div class="gsi"><div class="gsn">2</div>Manbaning ishonchliligini tekshir</div><div class="gsi"><div class="gsn">3</div>AVVAL BACKUP saqlа!</div></div></div>
+      <div class="gc"><div class="gc-icon">🧹</div><h3>3. Tozalash ⚠️ Muhim</h3><p>Vaqtning 60-80% shunga ketadi. Shoshilma — bu eng muhim bosqich.</p><div class="gs"><div class="gsi"><div class="gsn">1</div>NULL / bo'sh qatorlarni hal qil</div><div class="gsi"><div class="gsn">2</div>Dublikatlarni topib o'chir</div><div class="gsi"><div class="gsn">3</div>Format xatolarni tuzat</div><div class="gsi"><div class="gsn">4</div>Outlier qiymatlarni belgilа</div></div></div>
+      <div class="gc"><div class="gc-icon">🔬</div><h3>4. Tahlil Qilish</h3><p>Raqamlar ortidagi hikoyani topish — asosiy mahorat.</p><div class="gs"><div class="gsi"><div class="gsn">1</div>Umumiy statistika: min, max, avg</div><div class="gsi"><div class="gsn">2</div>Davr bo'yicha solishtir</div><div class="gsi"><div class="gsn">3</div>Muammoning sababini top</div></div></div>
+      <div class="gc"><div class="gc-icon">📈</div><h3>5. Vizualizatsiya</h3><p>Grafik chiroyli emas — aniq va tushunarli bo'lsin.</p><div class="gs"><div class="gsi"><div class="gsn">1</div>Trend → Line chart</div><div class="gsi"><div class="gsn">2</div>Solishtirish → Bar chart</div><div class="gsi"><div class="gsn">3</div>Ulush → Pie/Doughnut</div></div></div>
+      <div class="gc"><div class="gc-icon">🗣️</div><h3>6. Hisobot Berish</h3><p>Rahbar raqamlar emas — xulosa va tavsiya eshitmoqchi.</p><div class="gs"><div class="gsi"><div class="gsn">1</div>3 ta asosiy topilma bilan boshlang</div><div class="gsi"><div class="gsn">2</div>Oddiy tilda gapir</div><div class="gsi"><div class="gsn">3</div>"Nima qilish kerak?" tavsiya ber</div></div></div>
+    </div>
+    <div class="sh"><h3>Muhim Qoidalar</h3><div class="ln"></div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:18px">
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r14);padding:14px 16px;display:flex;gap:10px"><span style="font-size:20px;flex-shrink:0">💡</span><div><div style="font-size:13px;font-weight:700;margin-bottom:3px">'Bilmayman' demang</div><div style="font-size:11.5px;font-family:var(--mono);color:var(--t3);line-height:1.5">'Tekshirib ko'ray' — professional javob</div></div></div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r14);padding:14px 16px;display:flex;gap:10px"><span style="font-size:20px;flex-shrink:0">⚠️</span><div><div style="font-size:13px;font-weight:700;margin-bottom:3px">Hech qachon shoshma</div><div style="font-size:11.5px;font-family:var(--mono);color:var(--t3);line-height:1.5">Noto'g'ri tahlil = katta zarar. Ikki marta tekshir</div></div></div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r14);padding:14px 16px;display:flex;gap:10px"><span style="font-size:20px;flex-shrink:0">💾</span><div><div style="font-size:13px;font-weight:700;margin-bottom:3px">BACKUP majburiy</div><div style="font-size:11.5px;font-family:var(--mono);color:var(--t3);line-height:1.5">Har qanday fayl bilan ishlashdan oldin nusxa</div></div></div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r14);padding:14px 16px;display:flex;gap:10px"><span style="font-size:20px;flex-shrink:0">🎯</span><div><div style="font-size:13px;font-weight:700;margin-bottom:3px">Maqsaddan boshlang</div><div style="font-size:11.5px;font-family:var(--mono);color:var(--t3);line-height:1.5">"Bu tahlildan qaror qabul qilinadi?" — eng muhim savol</div></div></div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r14);padding:14px 16px;display:flex;gap:10px"><span style="font-size:20px;flex-shrink:0">📊</span><div><div style="font-size:13px;font-weight:700;margin-bottom:3px">To'g'ri grafik tanlang</div><div style="font-size:11.5px;font-family:var(--mono);color:var(--t3);line-height:1.5">Har savol uchun to'g'ri vizualizatsiya turi bor</div></div></div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r14);padding:14px 16px;display:flex;gap:10px"><span style="font-size:20px;flex-shrink:0">🤝</span><div><div style="font-size:13px;font-weight:700;margin-bottom:3px">Hamkasblardan o'rgan</div><div style="font-size:11.5px;font-family:var(--mono);color:var(--t3);line-height:1.5">Kuzat, so'ra, nusxa ko'chir — eng tez o'sish yo'li</div></div></div>
+    </div>
+  </div>
+
+  <!-- ════ YO'L XARITA ════ -->
+  <div id="s-roadmap" class="sec">
+    <div class="sh"><h3>O'rganish Yo'l Xaritasi</h3><div class="ln"></div></div>
+    <div class="tl">
+      <div class="tl-i"><div class="tl-l"><div class="tl-d" style="background:rgba(232,98,42,.15);border-color:var(--acc);color:var(--acc)">1</div><div class="tl-ln"></div></div><div class="tl-c"><h4>1–2 Oy — Asoslar (Excel + Google Sheets)</h4><p>Hech narsani bilmasang ham, shu bilan boshlash shart. Junior ish topish uchun yetarli.</p><div class="tl-tags"><span class="chip c-og">Excel</span><span class="chip c-og">Pivot Table</span><span class="chip c-og">VLOOKUP/XLOOKUP</span><span class="chip c-og">IF/SUMIF/COUNTIF</span><span class="chip c-og">Grafiklar</span><span class="chip c-og">Google Sheets</span></div></div></div>
+      <div class="tl-i"><div class="tl-l"><div class="tl-d" style="background:rgba(59,130,246,.15);border-color:var(--blue);color:var(--blue)">2</div><div class="tl-ln"></div></div><div class="tl-c"><h4>2–4 Oy — SQL (Eng Muhim!)</h4><p>Har bir Data Analyst SQL bilishi shart. Bu bilan maosh 30-50% oshadi. sqlbolt.com bepul o'rganish uchun.</p><div class="tl-tags"><span class="chip c-bl">SELECT/WHERE</span><span class="chip c-bl">JOIN (LEFT, INNER)</span><span class="chip c-bl">GROUP BY/HAVING</span><span class="chip c-bl">Subquery</span><span class="chip c-bl">Window Functions</span><span class="chip c-bl">CTEs</span></div></div></div>
+      <div class="tl-i"><div class="tl-l"><div class="tl-d" style="background:rgba(16,185,129,.15);border-color:var(--green);color:var(--green)">3</div><div class="tl-ln"></div></div><div class="tl-c"><h4>4–6 Oy — Python</h4><p>Katta ma'lumotlar uchun zarur. Pandas, Matplotlib, NumPy bilan boshla. Kaggle kursi bepul.</p><div class="tl-tags"><span class="chip c-gr">Pandas</span><span class="chip c-gr">NumPy</span><span class="chip c-gr">Matplotlib</span><span class="chip c-gr">Seaborn</span><span class="chip c-gr">Jupyter Notebook</span></div></div></div>
+      <div class="tl-i"><div class="tl-l"><div class="tl-d" style="background:rgba(139,92,246,.15);border-color:var(--purple);color:var(--purple)">4</div><div class="tl-ln"></div></div><div class="tl-c"><h4>5–7 Oy — BI Vositalar</h4><p>Dashboard va interaktiv hisobotlar. Power BI Microsoft kompaniyalarda, Tableau boshqalarda ishlatiladi.</p><div class="tl-tags"><span class="chip c-pu">Power BI</span><span class="chip c-pu">Tableau</span><span class="chip c-pu">DAX formulalar</span><span class="chip c-pu">Dashboard dizayn</span></div></div></div>
+      <div class="tl-i"><div class="tl-l"><div class="tl-d" style="background:rgba(245,158,11,.15);border-color:var(--gold);color:var(--gold)">5</div><div class="tl-ln"></div></div><div class="tl-c"><h4>7–9 Oy — Portfolio</h4><p>Haqiqiy loyihalar qil. GitHub, Kaggle, LinkedIn — shular ish topishga yordam beradi.</p><div class="tl-tags"><span class="chip c-gd">GitHub</span><span class="chip c-gd">Kaggle</span><span class="chip c-gd">Portfolio sayt</span><span class="chip c-gd">LinkedIn</span><span class="chip c-gd">Case study</span></div></div></div>
+      <div class="tl-i"><div class="tl-l"><div class="tl-d" style="background:rgba(236,72,153,.15);border-color:var(--pink);color:var(--pink)">6</div></div><div class="tl-c"><h4>9–12 Oy — Ilg'or</h4><p>Statistics, A/B testing, ML asoslari. Senior darajaga o'tish uchun shu kerak.</p><div class="tl-tags"><span class="chip c-pk">Statistics</span><span class="chip c-pk">A/B Testing</span><span class="chip c-pk">ML asoslari</span><span class="chip c-pk">dbt</span><span class="chip c-pk">Airflow asoslari</span></div></div></div>
+    </div>
+  </div>
+
+  <!-- ════ OYLIKLAR ════ -->
+  <div id="s-salary" class="sec">
+
+    <!-- KURS INFO BAR -->
+    <div style="background:linear-gradient(135deg,rgba(232,98,42,.1),rgba(59,130,246,.07));border:1px solid rgba(232,98,42,.2);border-radius:var(--r14);padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:18px">📡</span>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:2px">Joriy Kurslar — 18 mart 2026</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--t4)">Manba: CBU.uz · xe.com · theblock.co</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto">
+        <span style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:6px;padding:4px 12px;font-size:12px;font-family:var(--mono);color:var(--green)">💵 $1 = 12,094 so'm</span>
+        <span style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:4px 12px;font-size:12px;font-family:var(--mono);color:var(--gold)">₿ BTC = $74,294</span>
+        <span style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);border-radius:6px;padding:4px 12px;font-size:12px;font-family:var(--mono);color:var(--purple)">Ξ ETH = $2,335</span>
+      </div>
+    </div>
+
+    <!-- KONVERTOR -->
+    <div class="sh"><h3>💱 Valyuta Konvertori</h3><div class="ln"></div></div>
+    <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r16);padding:20px;margin-bottom:18px">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end;margin-bottom:16px">
+        <div>
+          <label style="display:block;font-size:11px;font-family:var(--mono);color:var(--t4);margin-bottom:6px">MIQDOR</label>
+          <input id="convAmt" type="number" class="fi" placeholder="400" value="400" oninput="convert()" style="font-size:18px;font-weight:700">
+        </div>
+        <div style="text-align:center;padding-bottom:10px">
+          <div style="background:var(--acc3);border:1px solid rgba(232,98,42,.25);border-radius:8px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;margin:0 auto" onclick="swapConv()" title="Almashtirish">⇄</div>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-family:var(--mono);color:var(--t4);margin-bottom:6px">NATIJA</label>
+          <div id="convResult" style="background:rgba(255,255,255,.03);border:1px solid var(--br);border-radius:var(--r8);padding:10px 14px;font-size:18px;font-weight:800;color:var(--acc2);font-family:var(--mono)">—</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <select id="convFrom" class="fi" style="flex:1;min-width:120px" onchange="convert()">
+          <option value="USD">🇺🇸 USD — Dollar</option>
+          <option value="UZS">🇺🇿 UZS — So'm</option>
+          <option value="BTC">₿ BTC — Bitcoin</option>
+          <option value="ETH">Ξ ETH — Ethereum</option>
+          <option value="BNB">◈ BNB — BNB</option>
+          <option value="SOL">◎ SOL — Solana</option>
+          <option value="XRP">✦ XRP — XRP</option>
+          <option value="USDT">₮ USDT — Tether</option>
+        </select>
+        <div style="display:flex;align-items:center;font-size:20px;color:var(--t4)">→</div>
+        <select id="convTo" class="fi" style="flex:1;min-width:120px" onchange="convert()">
+          <option value="UZS">🇺🇿 UZS — So'm</option>
+          <option value="USD">🇺🇸 USD — Dollar</option>
+          <option value="BTC">₿ BTC — Bitcoin</option>
+          <option value="ETH">Ξ ETH — Ethereum</option>
+          <option value="BNB">◈ BNB — BNB</option>
+          <option value="SOL">◎ SOL — Solana</option>
+          <option value="XRP">✦ XRP — XRP</option>
+          <option value="USDT">₮ USDT — Tether</option>
+        </select>
+      </div>
+      <!-- Quick amounts -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span style="font-size:11px;font-family:var(--mono);color:var(--t4);display:flex;align-items:center">Tez:</span>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="document.getElementById('convAmt').value=100;convert()">$100</button>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="document.getElementById('convAmt').value=200;convert()">$200</button>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="document.getElementById('convAmt').value=400;convert()">$400</button>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="document.getElementById('convAmt').value=500;convert()">$500</button>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="document.getElementById('convAmt').value=800;convert()">$800</button>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="document.getElementById('convAmt').value=1000;convert()">$1,000</button>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="document.getElementById('convAmt').value=1200;convert()">$1,200</button>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="document.getElementById('convAmt').value=2000;convert()">$2,000</button>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="document.getElementById('convAmt').value=3000;convert()">$3,000</button>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="document.getElementById('convAmt').value=5000;convert()">$5,000</button>
+      </div>
+      <!-- Rate info -->
+      <div id="convInfo" style="margin-top:12px;font-size:11px;font-family:var(--mono);color:var(--t4);border-top:1px solid var(--br);padding-top:10px"></div>
+    </div>
+
+    <!-- KRIPTO NARXLAR -->
+    <div class="sh"><h3>₿ Kripto Narxlari</h3><div class="ln"></div><span class="bdg">18.03.2026</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:18px">
+      <div style="background:var(--s2);border:1px solid rgba(245,158,11,.2);border-radius:var(--r14);padding:16px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#f59e0b,#d97706)"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="width:32px;height:32px;background:rgba(245,158,11,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">₿</div>
+          <div><div style="font-size:12px;font-weight:700">Bitcoin</div><div style="font-size:10px;font-family:var(--mono);color:var(--t4)">BTC</div></div>
+        </div>
+        <div style="font-size:1.3rem;font-weight:800;color:var(--gold);letter-spacing:-.3px">$74,294</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--t3);margin-top:3px">≈ 898,340,000 so'm</div>
+        <div style="font-size:10px;font-family:var(--mono);color:var(--green);margin-top:4px">+1.18% (24s)</div>
+      </div>
+      <div style="background:var(--s2);border:1px solid rgba(139,92,246,.2);border-radius:var(--r14);padding:16px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#8b5cf6,#6d28d9)"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="width:32px;height:32px;background:rgba(139,92,246,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">Ξ</div>
+          <div><div style="font-size:12px;font-weight:700">Ethereum</div><div style="font-size:10px;font-family:var(--mono);color:var(--t4)">ETH</div></div>
+        </div>
+        <div style="font-size:1.3rem;font-weight:800;color:var(--purple);letter-spacing:-.3px">$2,335</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--t3);margin-top:3px">≈ 28,239,590 so'm</div>
+        <div style="font-size:10px;font-family:var(--mono);color:var(--green);margin-top:4px">+8.32% (24s)</div>
+      </div>
+      <div style="background:var(--s2);border:1px solid rgba(245,158,11,.15);border-radius:var(--r14);padding:16px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#f59e0b,#78350f)"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="width:32px;height:32px;background:rgba(245,158,11,.12);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">◈</div>
+          <div><div style="font-size:12px;font-weight:700">BNB</div><div style="font-size:10px;font-family:var(--mono);color:var(--t4)">BNB</div></div>
+        </div>
+        <div style="font-size:1.3rem;font-weight:800;color:var(--gold);letter-spacing:-.3px">$681</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--t3);margin-top:3px">≈ 8,231,914 so'm</div>
+        <div style="font-size:10px;font-family:var(--mono);color:var(--green);margin-top:4px">+1.52% (24s)</div>
+      </div>
+      <div style="background:var(--s2);border:1px solid rgba(139,92,246,.15);border-radius:var(--r14);padding:16px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#06b6d4,#0891b2)"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="width:32px;height:32px;background:rgba(6,182,212,.12);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">◎</div>
+          <div><div style="font-size:12px;font-weight:700">Solana</div><div style="font-size:10px;font-family:var(--mono);color:var(--t4)">SOL</div></div>
+        </div>
+        <div style="font-size:1.3rem;font-weight:800;color:var(--cyan);letter-spacing:-.3px">$95</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--t3);margin-top:3px">≈ 1,148,930 so'm</div>
+        <div style="font-size:10px;font-family:var(--mono);color:var(--green);margin-top:4px">+4.27% (24s)</div>
+      </div>
+      <div style="background:var(--s2);border:1px solid rgba(59,130,246,.15);border-radius:var(--r14);padding:16px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#3b82f6,#1d4ed8)"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="width:32px;height:32px;background:rgba(59,130,246,.12);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">✦</div>
+          <div><div style="font-size:12px;font-weight:700">XRP</div><div style="font-size:10px;font-family:var(--mono);color:var(--t4)">XRP</div></div>
+        </div>
+        <div style="font-size:1.3rem;font-weight:800;color:var(--blue);letter-spacing:-.3px">$1.52</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--t3);margin-top:3px">≈ 18,383 so'm</div>
+        <div style="font-size:10px;font-family:var(--mono);color:var(--green);margin-top:4px">+9.88% (24s)</div>
+      </div>
+      <div style="background:var(--s2);border:1px solid rgba(16,185,129,.15);border-radius:var(--r14);padding:16px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#10b981,#065f46)"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="width:32px;height:32px;background:rgba(16,185,129,.12);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">₮</div>
+          <div><div style="font-size:12px;font-weight:700">Tether</div><div style="font-size:10px;font-family:var(--mono);color:var(--t4)">USDT</div></div>
+        </div>
+        <div style="font-size:1.3rem;font-weight:800;color:var(--green);letter-spacing:-.3px">$1.00</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--t3);margin-top:3px">≈ 12,094 so'm</div>
+        <div style="font-size:10px;font-family:var(--mono);color:var(--t4);margin-top:4px">≈ $1 (stable)</div>
+      </div>
+    </div>
+
+    <!-- MAOSH JADVALI -->
+    <div class="sh"><h3>Data Analyst Maoshlari</h3><div class="ln"></div></div>
+    <div class="kgrid" style="margin-bottom:16px">
+      <div class="kpi ko"><div class="kl">Junior (UZ)</div><div class="kv">$400</div><div class="ks" id="sal-jr">≈ 4,837,600 so'm</div></div>
+      <div class="kpi kb"><div class="kl">Mid (UZ)</div><div class="kv">$1,200</div><div class="ks" id="sal-md">≈ 14,512,800 so'm</div></div>
+      <div class="kpi kg"><div class="kl">Senior (UZ)</div><div class="kv">$3,000</div><div class="ks" id="sal-sr">≈ 36,282,000 so'm</div></div>
+      <div class="kpi kp"><div class="kl">Remote</div><div class="kv">$5,000</div><div class="ks" id="sal-rm">≈ 60,470,000 so'm</div></div>
+    </div>
+
+    <div class="sh"><h3>Lavozimlar va Maoshlar</h3><div class="ln"></div></div>
+    <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r16);overflow:hidden;margin-bottom:16px">
+      <div style="display:flex;padding:9px 16px;font-size:10px;font-family:var(--mono);color:var(--t4);letter-spacing:.8px;background:#07080f;border-bottom:1px solid var(--br)">
+        <span style="width:70px">DARAJA</span><span style="flex:1">LAVOZIM</span><span style="width:120px;text-align:right">UZ ($)</span><span style="width:140px;text-align:right">UZ (SO'M/OY)</span><span style="width:52px;text-align:right">YIL</span>
+      </div>
+      <div style="padding:8px">
+        <div class="sal"><span class="sal-lv"><span class="chip c-og">Junior</span></span><span class="sal-ti">Data Analyst</span><span class="sal-uz">$400–$800</span><span class="sal-in">4.8M–9.7M so'm</span><span class="sal-yr">0-1 yil</span></div>
+        <div class="sal"><span class="sal-lv"><span class="chip c-bl">Mid</span></span><span class="sal-ti">Data Analyst</span><span class="sal-uz">$800–$1,800</span><span class="sal-in">9.7M–21.8M so'm</span><span class="sal-yr">1-3 yil</span></div>
+        <div class="sal"><span class="sal-lv"><span class="chip c-gr">Senior</span></span><span class="sal-ti">Senior Data Analyst</span><span class="sal-uz">$1,800–$3,000</span><span class="sal-in">21.8M–36.3M so'm</span><span class="sal-yr">3-6 yil</span></div>
+        <div class="sal"><span class="sal-lv"><span class="chip c-gd">Lead</span></span><span class="sal-ti">Lead / Principal DA</span><span class="sal-uz">$3,000–$5,000</span><span class="sal-in">36.3M–60.5M so'm</span><span class="sal-yr">6+ yil</span></div>
+        <div class="sal"><span class="sal-lv"><span class="chip c-gy">BI</span></span><span class="sal-ti">BI Developer</span><span class="sal-uz">$1,200–$2,500</span><span class="sal-in">14.5M–30.2M so'm</span><span class="sal-yr">2-5 yil</span></div>
+        <div class="sal"><span class="sal-lv"><span class="chip c-gy">DE</span></span><span class="sal-ti">Data Engineer</span><span class="sal-uz">$1,500–$3,500</span><span class="sal-in">18.1M–42.3M so'm</span><span class="sal-yr">2-5 yil</span></div>
+        <div class="sal"><span class="sal-lv"><span class="chip c-gy">DS</span></span><span class="sal-ti">Data Scientist</span><span class="sal-uz">$2,000–$4,000</span><span class="sal-in">24.2M–48.4M so'm</span><span class="sal-yr">3+ yil</span></div>
+        <div class="sal"><span class="sal-lv"><span class="chip c-pu">Free</span></span><span class="sal-ti">Freelance DA</span><span class="sal-uz">$500–$2,000</span><span class="sal-in">6M–24.2M so'm</span><span class="sal-yr">1+ yil</span></div>
+      </div>
+    </div>
+
+    <div class="sh"><h3>Maosh Oshirish Sirlari</h3><div class="ln"></div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px">
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r14);padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;font-weight:700">🗄️ SQL Bilish</span><span class="chip c-gr">+30–50%</span></div><p style="font-size:12px;color:var(--t3);font-family:var(--mono);line-height:1.5">SQL bilganlar hamsohadan ancha ko'proq oladi</p></div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r14);padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;font-weight:700">🐍 Python</span><span class="chip c-gr">+40–60%</span></div><p style="font-size:12px;color:var(--t3);font-family:var(--mono);line-height:1.5">Python+SQL kombinatsiyasi juda qimmatli</p></div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r14);padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;font-weight:700">📊 Power BI</span><span class="chip c-gr">+20–35%</span></div><p style="font-size:12px;color:var(--t3);font-family:var(--mono);line-height:1.5">Dashboard yasay olganlar talab yuqori</p></div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r14);padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;font-weight:700">🌐 Ingliz Tili</span><span class="chip c-gr">+100–300%</span></div><p style="font-size:12px;color:var(--t3);font-family:var(--mono);line-height:1.5">Remote ish — oylik 3-5 barobar oshadi</p></div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r14);padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;font-weight:700">📋 Portfolio</span><span class="chip c-gr">+20–40%</span></div><p style="font-size:12px;color:var(--t3);font-family:var(--mono);line-height:1.5">Haqiqiy loyihalar yig'ib GitHub'ga yuklang</p></div>
+      <div style="background:var(--s2);border:1px solid var(--br);border-radius:var(--r14);padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;font-weight:700">🎓 Sertifikat</span><span class="chip c-gr">+10–25%</span></div><p style="font-size:12px;color:var(--t3);font-family:var(--mono);line-height:1.5">Google DA, Microsoft, AWS sertifikatlari</p></div>
+    </div>
+  </div>
+
+  <!-- ════ SQL ════ -->
+  <div id="s-sql" class="sec">
+    <div class="sh"><h3>SQL Cheatsheet</h3><div class="ln"></div></div>
+    <div class="g2">
+      <div>
+        <div class="sql-b"><div class="sql-lbl">Asosiy SELECT</div><button class="cp-btn" onclick="cpSql(this)">COPY</button><pre><span class="kw">SELECT</span> col1, col2, col3
+<span class="kw">FROM</span> table_name
+<span class="kw">WHERE</span> condition = <span class="str">'value'</span>
+  <span class="kw">AND</span> amount > <span class="num">100</span>
+<span class="kw">ORDER BY</span> col1 <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">100</span>;</pre></div>
+        <div class="sql-b"><div class="sql-lbl">Guruhlash</div><button class="cp-btn" onclick="cpSql(this)">COPY</button><pre><span class="kw">SELECT</span>
+  category,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> cnt,
+  <span class="fn">SUM</span>(amount) <span class="kw">AS</span> total,
+  <span class="fn">AVG</span>(amount) <span class="kw">AS</span> avg_val,
+  <span class="fn">MAX</span>(amount) <span class="kw">AS</span> max_val
+<span class="kw">FROM</span> sales
+<span class="kw">GROUP BY</span> category
+<span class="kw">HAVING</span> <span class="fn">COUNT</span>(*) > <span class="num">5</span>
+<span class="kw">ORDER BY</span> total <span class="kw">DESC</span>;</pre></div>
+        <div class="sql-b"><div class="sql-lbl">JOIN</div><button class="cp-btn" onclick="cpSql(this)">COPY</button><pre><span class="kw">SELECT</span>
+  o.order_id,
+  c.name,
+  p.product,
+  o.amount
+<span class="kw">FROM</span> orders o
+<span class="kw">LEFT JOIN</span> customers c
+  <span class="kw">ON</span> o.customer_id = c.id
+<span class="kw">INNER JOIN</span> products p
+  <span class="kw">ON</span> o.product_id = p.id
+<span class="kw">WHERE</span> o.date >= <span class="str">'2024-01-01'</span>;</pre></div>
+      </div>
+      <div>
+        <div class="sql-b"><div class="sql-lbl">Sana bo'yicha</div><button class="cp-btn" onclick="cpSql(this)">COPY</button><pre><span class="kw">SELECT</span>
+  <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, date) <span class="kw">AS</span> month,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> orders,
+  <span class="fn">SUM</span>(revenue) <span class="kw">AS</span> revenue
+<span class="kw">FROM</span> orders
+<span class="kw">WHERE</span> date <span class="kw">BETWEEN</span>
+  <span class="str">'2024-01-01'</span> <span class="kw">AND</span> <span class="str">'2024-12-31'</span>
+<span class="kw">GROUP BY</span> <span class="num">1</span>
+<span class="kw">ORDER BY</span> <span class="num">1</span>;</pre></div>
+        <div class="sql-b"><div class="sql-lbl">Window Functions</div><button class="cp-btn" onclick="cpSql(this)">COPY</button><pre><span class="kw">SELECT</span>
+  name, salary, dept,
+  <span class="fn">RANK</span>() <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> dept
+    <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>
+  ) <span class="kw">AS</span> rank,
+  <span class="fn">SUM</span>(salary) <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> dept
+  ) <span class="kw">AS</span> dept_total,
+  <span class="fn">LAG</span>(salary) <span class="kw">OVER</span>(
+    <span class="kw">ORDER BY</span> hire_date
+  ) <span class="kw">AS</span> prev_sal
+<span class="kw">FROM</span> employees;</pre></div>
+        <div class="sql-b"><div class="sql-lbl">Foiz Hisoblash</div><button class="cp-btn" onclick="cpSql(this)">COPY</button><pre><span class="kw">SELECT</span>
+  category,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> cnt,
+  <span class="fn">ROUND</span>(
+    <span class="fn">COUNT</span>(*) * <span class="num">100.0</span> /
+    <span class="fn">SUM</span>(<span class="fn">COUNT</span>(*)) <span class="kw">OVER</span>(), <span class="num">2</span>
+  ) <span class="kw">AS</span> pct
+<span class="kw">FROM</span> orders
+<span class="kw">GROUP BY</span> category
+<span class="kw">ORDER BY</span> cnt <span class="kw">DESC</span>;</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ CHECKLIST ════ -->
+  <div id="s-checklist" class="sec">
+    <div class="sh"><h3>Kunlik Vazifalar</h3><div class="ln"></div></div>
+    <div class="ckg">
+      <div class="ckc"><h4>🌅 Ertalab</h4>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Email va Slack xabarlarni ko'rib chiq</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Bugungi vazifalarni yoz va tartibla</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Kerakli ma'lumotlar qayerda?</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Yig'ilishlar bormi? Tayyor bo'l</div></div>
+      </div>
+      <div class="ckc"><h4>🔬 Tahlil Paytida</h4>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Asl faylni NUSXA qil (backup!)</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Bo'sh qatorlarni tozala</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Dublikatlarni tekshir</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Natijani IKKI marta hisoblа</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">G'ayritabiiy qiymatlarni belgilа</div></div>
+      </div>
+      <div class="ckc"><h4>📊 Hisobot Oldidan</h4>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Raqamlar to'g'rimi?</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Grafik tushunarli?</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Xulosa qisqa va aniq?</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Tavsiya berdimmi?</div></div>
+      </div>
+      <div class="ckc"><h4>🌙 Kech</h4>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Barcha fayllarni saqlа</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Ertangi vazifalarni yoz</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Bugun nima yangi o'rgandim?</div></div>
+        <div class="ci" onclick="tck(this)"><div class="cbox">✓</div><div class="ctxt">Daftarchaga yozdimmi?</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+/* ═══════════════════════════════════════
+   CURSOR
+═══════════════════════════════════════ */
+const cEl=document.getElementById('cur'),cREl=document.getElementById('curR');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cEl.style.left=mx+'px';cEl.style.top=my+'px';});
+(function ring(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;cREl.style.left=rx+'px';cREl.style.top=ry+'px';requestAnimationFrame(ring);})();
+
+/* ═══════════════════════════════════════
+   PARTICLE BACKGROUND
+═══════════════════════════════════════ */
+const bgC=document.getElementById('bgc');
+const bgX=bgC.getContext('2d');
+function rsBg(){bgC.width=innerWidth;bgC.height=innerHeight;}
+rsBg(); window.addEventListener('resize',rsBg);
+const PARTS=Array.from({length:72},()=>({
+  x:Math.random()*innerWidth, y:Math.random()*innerHeight,
+  r:Math.random()*1.1+.3,
+  dx:(Math.random()-.5)*.18, dy:(Math.random()-.5)*.18,
+  c:['#e8622a','#ff8c5a','#1e3a8a','#3b82f6','#8b5cf6','#06b6d4'][Math.floor(Math.random()*6)]
+}));
+function drawBg(){
+  bgX.clearRect(0,0,bgC.width,bgC.height);
+  PARTS.forEach(p=>{
+    p.x+=p.dx; p.y+=p.dy;
+    if(p.x<0||p.x>bgC.width)p.dx*=-1;
+    if(p.y<0||p.y>bgC.height)p.dy*=-1;
+    bgX.beginPath(); bgX.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bgX.fillStyle=p.c; bgX.fill();
+  });
+  for(let i=0;i<PARTS.length;i++) for(let j=i+1;j<PARTS.length;j++){
+    const d=Math.hypot(PARTS[i].x-PARTS[j].x,PARTS[i].y-PARTS[j].y);
+    if(d<95){
+      bgX.beginPath(); bgX.moveTo(PARTS[i].x,PARTS[i].y); bgX.lineTo(PARTS[j].x,PARTS[j].y);
+      bgX.strokeStyle=`rgba(232,98,42,${.05*(1-d/95)})`; bgX.lineWidth=.5; bgX.stroke();
+    }
+  }
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+/* ═══════════════════════════════════════
+   DATE
+═══════════════════════════════════════ */
+const MN=['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+const ND=new Date();
+document.getElementById('tdate').textContent=`${ND.getDate()} ${MN[ND.getMonth()]} ${ND.getFullYear()}`;
+if(window.innerWidth>700) document.getElementById('tdate').style.display='block';
+
+/* ═══════════════════════════════════════
+   MOBILE SIDEBAR
+═══════════════════════════════════════ */
+function toggleSb(){
+  const sb=document.getElementById('sb');
+  sb.classList.toggle('mobile-open');
+}
+document.addEventListener('click',e=>{
+  const sb=document.getElementById('sb');
+  if(sb.classList.contains('mobile-open')&&!sb.contains(e.target)&&!document.getElementById('hbg').contains(e.target))
+    sb.classList.remove('mobile-open');
+});
+
+/* ═══════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════ */
+const CRUMBS={dash:'// Dashboard',csv:'// CSV Fayllar',analysis:'// Tahlil',charts:'// Grafiklar',notebook:'// Daftarcha',guide:"// Qo'llanma",roadmap:"// Yo'l Xarita",salary:'// Oyliklar',sql:'// SQL',checklist:'// Checklist'};
+function go(id){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('s-'+id)?.classList.add('on');
+  document.querySelector(`[data-s="${id}"]`)?.classList.add('on');
+  document.getElementById('crumb').textContent=CRUMBS[id]||'';
+  if(window.innerWidth<=900) document.getElementById('sb').classList.remove('mobile-open');
+  if(id==='analysis') buildStats();
+  if(id==='charts') buildCharts();
+  if(id==='notebook'){ loadNotes(); renderNotes(); }
+  if(id==='csv'){ renderCSVList(); if(currentFileId){const af=csvFiles.find(f=>f.id===currentFileId);if(af)showActiveFileBar(af);} }
+}
+
+/* ═══════════════════════════════════════
+   CSV HANDLING
+═══════════════════════════════════════ */
+let DATA=null, HDRS=[], csvFiles=[], currentFileName='', currentFileId='', previewLimit=0;
+const PAL=['#e8622a','#3b82f6','#06b6d4','#10b981','#f59e0b','#8b5cf6','#ec4899','#ff8c5a'];
+let charts={};
+
+function loadCSVFiles(){
+  try{ csvFiles=JSON.parse(localStorage.getItem('dm_csv')||'[]'); }catch{ csvFiles=[]; }
+  updateCSVKPIs();
+}
+function saveCSVFiles(){ localStorage.setItem('dm_csv',JSON.stringify(csvFiles)); updateCSVKPIs(); }
+function updateCSVKPIs(){
+  document.getElementById('kv6').textContent=csvFiles.length;
+  document.getElementById('cfCount').textContent=csvFiles.length+' ta';
+}
+
+// Drop zone
+const dzEl=document.getElementById('dz');
+if(dzEl){
+  dzEl.addEventListener('dragover',e=>{e.preventDefault();dzEl.classList.add('drag');});
+  dzEl.addEventListener('dragleave',()=>dzEl.classList.remove('drag'));
+  dzEl.addEventListener('drop',e=>{e.preventDefault();dzEl.classList.remove('drag');if(e.dataTransfer.files[0])doCSV(e.dataTransfer.files[0]);});
+}
+
+function handleCSV(e){ if(e.target.files[0]) doCSV(e.target.files[0]); e.target.value=''; }
+
+function doCSV(file){
+  notify('📂 Yuklanmoqda...','info');
+  Papa.parse(file,{
+    header:true, skipEmptyLines:true,
+    complete(res){
+      DATA=res.data; HDRS=res.meta.fields||[];
+      currentFileName=file.name;
+      if(!DATA.length){notify('⚠️ Fayl bo\'sh','error');return;}
+      const entry={id:'c'+Date.now(),name:file.name,rows:DATA.length,cols:HDRS.length,headers:HDRS,date:new Date().toISOString(),data:JSON.stringify(DATA)};
+      const ei=csvFiles.findIndex(f=>f.name===file.name);
+      if(ei>-1){ currentFileId=csvFiles[ei].id; csvFiles[ei]=entry; }
+      else{ currentFileId=entry.id; csvFiles.unshift(entry); }
+      if(csvFiles.length>30) csvFiles=csvFiles.slice(0,30);
+      saveCSVFiles();
+      updateDash();
+      renderCSVList();
+      showActiveFileBar(entry);
+      document.getElementById('upBnr').style.display='none';
+      notify(`✅ "${file.name}" — ${DATA.length} qator yuklandi!`,'success');
+    },
+    error(){ notify('⚠️ Fayl o\'qishda xatolik!','error'); }
+  });
+}
+
+function activateCSV(id){
+  const f=csvFiles.find(x=>x.id===id);
+  if(!f) return;
+  HDRS=f.headers||[];
+  currentFileName=f.name;
+  currentFileId=id;
+  try{ DATA=JSON.parse(f.data||f.preview||'[]'); }catch{ DATA=[]; }
+  document.querySelectorAll('.cf-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('cf_'+id)?.classList.add('active');
+  updateDash();
+  showActiveFileBar(f);
+  notify('📊 "'+f.name+'" tanlandi — '+DATA.length.toLocaleString()+' qator','info');
+}
+
+function showActiveFileBar(f){
+  const bar=document.getElementById('activeFileBar');
+  if(!bar) return;
+  bar.style.display='block';
+  document.getElementById('afName').textContent='📄 '+f.name;
+  document.getElementById('afMeta').textContent=f.rows.toLocaleString()+' qator · '+f.cols+' ustun · '+new Date(f.date).toLocaleDateString();
+  setPreview(previewLimit);
+}
+
+function setPreview(limit){
+  previewLimit=limit;
+  // Update button styles
+  ['pb200','pb500','pbAll'].forEach(id=>{
+    const btn=document.getElementById(id);
+    if(!btn) return;
+    btn.style.background='transparent';
+    btn.style.borderColor='rgba(255,255,255,.1)';
+    btn.style.color='var(--t3)';
+  });
+  const activeBtn=limit===200?'pb200':limit===500?'pb500':'pbAll';
+  const ab=document.getElementById(activeBtn);
+  if(ab){ab.style.background='var(--acc3)';ab.style.borderColor='rgba(232,98,42,.3)';ab.style.color='var(--acc2)';}
+
+  if(!DATA||!HDRS.length) return;
+  const rows=limit===0?DATA:DATA.slice(0,limit);
+  const mt=document.getElementById('miniTable');
+  if(!mt) return;
+
+  mt.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--s2);border-bottom:1px solid var(--br)">
+      <span style="font-size:11px;font-family:var(--mono);color:var(--t4)">
+        Ko'rsatilmoqda: <strong style="color:var(--t2)">${rows.length.toLocaleString()}</strong> / ${DATA.length.toLocaleString()} qator
+        ${limit===0?'<span style="color:var(--green)"> · Hammasi</span>':''}
+      </span>
+      <span style="font-size:11px;font-family:var(--mono);color:var(--t4)">${HDRS.length} ustun</span>
+    </div>
+    <div style="overflow-x:auto;max-height:400px;overflow-y:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead>
+          <tr>
+            <th style="position:sticky;top:0;background:#060810;padding:8px 12px;text-align:left;font-family:var(--mono);font-size:10px;color:var(--t4);letter-spacing:.8px;border-bottom:1px solid var(--br);white-space:nowrap;color:var(--t5)">#</th>
+            ${HDRS.map(h=>`<th style="position:sticky;top:0;background:#060810;padding:8px 12px;text-align:left;font-family:var(--mono);font-size:10px;color:var(--t4);letter-spacing:.8px;border-bottom:1px solid var(--br);white-space:nowrap" title="${h}">${h.length>14?h.substring(0,13)+'…':h}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((r,i)=>`
+            <tr style="border-bottom:1px solid rgba(255,255,255,.03);transition:background .12s" onmouseover="this.style.background='rgba(232,98,42,.04)'" onmouseout="this.style.background=''">
+              <td style="padding:7px 12px;font-family:var(--mono);font-size:11px;color:var(--t5);user-select:none">${i+1}</td>
+              ${HDRS.map(h=>{
+                const v=String(r[h]??'');
+                const empty=!v||v==='';
+                return `<td style="padding:7px 12px;font-family:var(--mono);font-size:11px;color:${empty?'var(--t5)':'var(--t2)'};max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${empty?'font-style:italic':''}" title="${v}">${empty?'—':v.substring(0,28)+(v.length>28?'…':'')}</td>`;
+              }).join('')}
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function deleteCSV(id){
+  const f=csvFiles.find(x=>x.id===id);
+  if(!confirm(`"${f?.name}" faylini o'chirasizmi?`)) return;
+  csvFiles=csvFiles.filter(x=>x.id!==id);
+  saveCSVFiles();
+  renderCSVList();
+  notify('🗑️ Fayl o\'chirildi','info');
+}
+
+function renderCSVList(){
+  loadCSVFiles();
+  const el=document.getElementById('cfList');
+  if(!el) return;
+  if(!csvFiles.length){
+    el.innerHTML='<div class="emp"><span class="ei">📂</span><p>Hali fayl yuklanmagan</p></div>';
+    return;
+  }
+  el.innerHTML=csvFiles.map((f,idx)=>{
+    const isActive=f.id===currentFileId;
+    const dateStr=new Date(f.date).toLocaleDateString();
+    const timeStr=new Date(f.date).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+    return `
+    <div class="cf-card ${isActive?'active':''}" id="cf_${f.id}" onclick="activateCSV('${f.id}')">
+      <div class="cf-icon" style="background:${isActive?'linear-gradient(135deg,var(--acc),#a03010)':'linear-gradient(135deg,var(--s4),var(--s5))'};border:1px solid ${isActive?'rgba(232,98,42,.3)':'var(--br)'}">📊</div>
+      <div class="cf-info">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <div class="cf-name" title="${f.name}">${f.name}</div>
+          ${isActive?'<span class="chip c-og" style="font-size:9px">● FAOL</span>':''}
+        </div>
+        <div class="cf-meta">${f.rows.toLocaleString()} qator · ${f.cols} ustun · ${dateStr} ${timeStr}</div>
+      </div>
+      <div class="cf-acts">
+        <button class="btn btn-ghost" style="padding:5px 9px;font-size:11px" title="Tahlil" onclick="event.stopPropagation();activateCSV('${f.id}');go('analysis')">🔬</button>
+        <button class="btn btn-ghost" style="padding:5px 9px;font-size:11px" title="Grafik" onclick="event.stopPropagation();activateCSV('${f.id}');go('charts')">📈</button>
+        <button class="btn btn-ghost" style="padding:5px 9px;font-size:11px" title="Yuklab olish" onclick="event.stopPropagation();activateCSV('${f.id}');exportCSV()">⬇️</button>
+        <button class="btn btn-red" style="padding:5px 9px;font-size:11px" title="O'chirish" onclick="event.stopPropagation();deleteCSV('${f.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // If we have active file and in csv section, show bar
+  if(currentFileId){
+    const af=csvFiles.find(f=>f.id===currentFileId);
+    if(af) showActiveFileBar(af);
+  }
+}
+
+/* ═══════════════════════════════════════
+   DATA HELPERS
+═══════════════════════════════════════ */
+function numCols(){
+  if(!HDRS.length||!DATA?.length) return [];
+  return HDRS.filter(h=>{
+    const v=DATA.map(r=>r[h]).filter(x=>x!==''&&x!=null);
+    return v.length>0 && v.filter(x=>!isNaN(parseFloat(x))).length > v.length*.65;
+  });
+}
+function txtCols(){ return HDRS.filter(h=>!numCols().includes(h)); }
+function colVals(col,asNum=false){
+  const v=DATA.map(r=>r[col]).filter(x=>x!==''&&x!=null&&x!==undefined);
+  return asNum ? v.map(x=>parseFloat(x)).filter(x=>!isNaN(x)) : v;
+}
+function stOf(arr){
+  if(!arr.length) return{min:0,max:0,avg:0,median:0,sum:0,std:0};
+  const s=arr.reduce((a,b)=>a+b,0);
+  const avg=s/arr.length;
+  const st=[...arr].sort((a,b)=>a-b);
+  const variance=arr.reduce((a,b)=>a+Math.pow(b-avg,2),0)/arr.length;
+  return{min:Math.min(...arr),max:Math.max(...arr),avg,median:st[Math.floor(st.length/2)],sum:s,std:Math.sqrt(variance)};
+}
+function fmtNum(n){
+  if(n===undefined||n===null) return '—';
+  if(Math.abs(n)>=1e9) return (n/1e9).toFixed(2)+'B';
+  if(Math.abs(n)>=1e6) return (n/1e6).toFixed(2)+'M';
+  if(Math.abs(n)>=1e3) return n.toLocaleString(undefined,{maximumFractionDigits:1});
+  return n.toLocaleString(undefined,{maximumFractionDigits:2});
+}
+
+const COPTS={
+  responsive:true, maintainAspectRatio:true,
+  animation:{duration:700,easing:'easeInOutQuart'},
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(11,13,22,.95)',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#f8fafc',bodyColor:'#94a3b8',padding:10,titleFont:{family:'JetBrains Mono',size:11},bodyFont:{family:'JetBrains Mono',size:11}}},
+  scales:{
+    x:{ticks:{color:'#64748b',font:{family:'JetBrains Mono',size:10},maxRotation:35},grid:{color:'rgba(255,255,255,.03)'},border:{color:'rgba(255,255,255,.06)'}},
+    y:{ticks:{color:'#64748b',font:{family:'JetBrains Mono',size:10}},grid:{color:'rgba(255,255,255,.04)'},border:{color:'rgba(255,255,255,.06)'}}
+  }
+};
+const COPTS_NO_SCALE={responsive:true,maintainAspectRatio:true,animation:{duration:700},plugins:{legend:{labels:{color:'#94a3b8',font:{family:'JetBrains Mono',size:10},boxWidth:10,padding:12}},tooltip:{backgroundColor:'rgba(11,13,22,.95)',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#f8fafc',bodyColor:'#94a3b8',padding:10}}};
+
+function mkC(id,cfg){
+  if(charts[id]){try{charts[id].destroy();}catch(e){}}
+  const c=document.getElementById(id);
+  if(c) charts[id]=new Chart(c,cfg);
+  return charts[id];
+}
+
+/* ═══════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════ */
+function updateDash(){
+  if(!DATA||!DATA.length) return;
+  const nc=numCols(), tc=txtCols();
+  let nulls=0;
+  DATA.forEach(r=>HDRS.forEach(h=>{if(!r[h]||r[h]==='')nulls++;}));
+  const comp=((1-nulls/(DATA.length*HDRS.length))*100).toFixed(1);
+
+  document.getElementById('kv1').textContent=DATA.length.toLocaleString();
+  document.getElementById('kv2').textContent=HDRS.length;
+  document.getElementById('kv3').textContent=comp+'%';
+  document.getElementById('kv4').textContent=nc.length;
+
+  // Auto-insights banner
+  const insEl=document.getElementById('dashInsights');
+  if(insEl){
+    const insights=[];
+    if(nulls>0) insights.push(`⚠️ ${nulls.toLocaleString()} ta bo'sh qiymat topildi`);
+    if(nc.length>0){
+      const sv=stOf(colVals(nc[0],true));
+      insights.push(`📊 ${nc[0]}: o'rtacha ${fmtNum(sv.avg)}, max ${fmtNum(sv.max)}`);
+    }
+    if(tc.length>0){
+      const freq={};DATA.forEach(r=>{const k=r[tc[0]]||'N/A';freq[k]=(freq[k]||0)+1;});
+      const top=Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];
+      if(top) insights.push(`🏆 Eng ko'p: "${top[0]}" — ${top[1]} marta`);
+    }
+    insEl.innerHTML=insights.map(i=>`<span style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:5px 12px;font-size:11.5px;font-family:var(--mono);color:var(--t2);white-space:nowrap">${i}</span>`).join('');
+  }
+
+  // Chart 1: Bar — top categories
+  if(nc.length>0&&tc.length>0){
+    const grp={};
+    DATA.forEach(r=>{const k=String(r[tc[0]]||'N/A').substring(0,18);if(!grp[k])grp[k]=0;grp[k]+=parseFloat(r[nc[0]])||0;});
+    const top=Object.entries(grp).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    document.getElementById('ct1').textContent=nc[0]+' — '+tc[0];
+    document.getElementById('cs1').textContent='Top '+top.length+' kategoria';
+    mkC('ch1',{type:'bar',data:{labels:top.map(x=>x[0]),datasets:[{data:top.map(x=>x[1]),backgroundColor:PAL.map(c=>c+'50'),borderColor:PAL,borderWidth:2,borderRadius:5,borderSkipped:false}]},options:{...COPTS,plugins:{...COPTS.plugins,tooltip:{...COPTS.plugins.tooltip,callbacks:{label:ctx=>' '+fmtNum(ctx.parsed.y)}}}}});
+  } else if(nc.length>0){
+    const vals=colVals(nc[0],true).slice(0,20);
+    document.getElementById('ct1').textContent=nc[0]+' qiymatlari';
+    document.getElementById('cs1').textContent='Birinchi 20 ta';
+    mkC('ch1',{type:'bar',data:{labels:vals.map((_,i)=>'#'+(i+1)),datasets:[{data:vals,backgroundColor:PAL.map(c=>c+'50'),borderColor:PAL,borderWidth:2,borderRadius:5}]},options:COPTS});
+  }
+
+  // Chart 2: Doughnut
+  if(tc.length>0){
+    const freq={};DATA.forEach(r=>{const k=String(r[tc[0]]||'N/A').substring(0,20);freq[k]=(freq[k]||0)+1;});
+    const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,7);
+    document.getElementById('ct2').textContent=tc[0]+' taqsimoti';
+    mkC('ch2',{type:'doughnut',data:{labels:top.map(x=>x[0]),datasets:[{data:top.map(x=>x[1]),backgroundColor:PAL.map(c=>c+'bb'),borderColor:PAL.map(c=>c+'dd'),borderWidth:2,hoverOffset:6}]},options:{...COPTS_NO_SCALE,cutout:'60%'}});
+  }
+
+  // Chart 3: Histogram
+  if(nc.length>0){
+    const vals=colVals(nc[0],true);
+    const mn=Math.min(...vals),mx=Math.max(...vals),bins=10,step=(mx-mn)/bins||1;
+    const bkts=Array(bins).fill(0);
+    vals.forEach(v=>{const i=Math.min(Math.floor((v-mn)/step),bins-1);bkts[i]++;});
+    document.getElementById('ct3').textContent=nc[0]+' taqsimoti';
+    mkC('ch3',{type:'bar',data:{labels:bkts.map((_,i)=>fmtNum(mn+i*step)),datasets:[{data:bkts,backgroundColor:'#e8622a44',borderColor:'#e8622a',borderWidth:2,borderRadius:3,borderSkipped:false}]},options:{...COPTS,plugins:{...COPTS.plugins}}});
+  }
+
+  // Chart 4: Scatter or Line
+  if(nc.length>=2){
+    const pts=DATA.slice(0,150).map(r=>({x:parseFloat(r[nc[0]]),y:parseFloat(r[nc[1]])})).filter(p=>!isNaN(p.x)&&!isNaN(p.y));
+    document.getElementById('ct4').textContent=nc[0]+' vs '+nc[1];
+    mkC('ch4',{type:'scatter',data:{datasets:[{data:pts,backgroundColor:'#8b5cf655',borderColor:'#8b5cf6',pointRadius:4,pointHoverRadius:6}]},options:{...COPTS,plugins:{...COPTS.plugins}}});
+  } else if(nc.length===1){
+    const vals=colVals(nc[0],true).slice(0,50);
+    document.getElementById('ct4').textContent=nc[0]+' dinamikasi';
+    mkC('ch4',{type:'line',data:{labels:vals.map((_,i)=>i+1),datasets:[{data:vals,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.1)',fill:true,tension:.4,pointRadius:2,borderWidth:2}]},options:{...COPTS,plugins:{...COPTS.plugins}}});
+  }
+}
+
+/* ═══════════════════════════════════════
+   ANALYSIS PAGE
+═══════════════════════════════════════ */
+function buildStats(){
+  if(!DATA||!HDRS.length){
+    document.getElementById('statsGrid').innerHTML='<div class="emp"><span class="ei">🔬</span><p>CSV faylni yuklang</p></div>';
+    return;
+  }
+  document.getElementById('colCount').textContent=HDRS.length+' ustun · '+DATA.length.toLocaleString()+' qator';
+
+  const nc=numCols();
+  let nulls=0; DATA.forEach(r=>HDRS.forEach(h=>{if(!r[h]||r[h]==='')nulls++;}));
+  const comp=((1-nulls/(DATA.length*HDRS.length))*100).toFixed(1);
+
+  // Summary row
+  let html=`
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:18px">
+    <div style="background:linear-gradient(135deg,#e8622a,#a03010);border-radius:var(--r12);padding:14px 16px">
+      <div style="font-size:10px;font-family:var(--mono);opacity:.7;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Jami Qator</div>
+      <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.5px">${DATA.length.toLocaleString()}</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);border-radius:var(--r12);padding:14px 16px">
+      <div style="font-size:10px;font-family:var(--mono);opacity:.7;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Ustunlar</div>
+      <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.5px">${HDRS.length}</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#064e3b,#10b981);border-radius:var(--r12);padding:14px 16px">
+      <div style="font-size:10px;font-family:var(--mono);opacity:.7;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">To'liqlik</div>
+      <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.5px">${comp}%</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#3b0764,#8b5cf6);border-radius:var(--r12);padding:14px 16px">
+      <div style="font-size:10px;font-family:var(--mono);opacity:.7;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Bo'sh Qiymat</div>
+      <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.5px;color:${nulls>0?'#fca5a5':'#6ee7b7'}">${nulls.toLocaleString()}</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#164e63,#06b6d4);border-radius:var(--r12);padding:14px 16px">
+      <div style="font-size:10px;font-family:var(--mono);opacity:.7;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Raqamli</div>
+      <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.5px">${nc.length}</div>
+    </div>
+    <div style="background:linear-gradient(135deg,#78350f,#f59e0b);border-radius:var(--r12);padding:14px 16px">
+      <div style="font-size:10px;font-family:var(--mono);opacity:.7;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Matnli</div>
+      <div style="font-size:1.5rem;font-weight:800;letter-spacing:-.5px">${HDRS.length-nc.length}</div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <h3 style="font-size:11px;font-family:var(--mono);color:var(--t4);text-transform:uppercase;letter-spacing:1.5px">Ustunlar Tahlili</h3>
+      <div style="height:1px;width:60px;background:var(--br)"></div>
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 11px" onclick="exportCSV()">⬇️ CSV Yuklab olish</button>
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 11px" onclick="exportJSON()">⬇️ JSON</button>
+      <button class="btn btn-green" style="font-size:11px;padding:5px 11px" onclick="exportCleanCSV()">🧹 Tozalangan CSV</button>
+      <button class="btn btn-acc" style="font-size:11px;padding:5px 11px" onclick="exportReport()">📄 Hisobot (HTML)</button>
+    </div>
+  </div>
+
+  <div class="csg">`;
+
+  HDRS.forEach(col=>{
+    const vals=colVals(col);
+    const nullCnt=DATA.length-vals.length;
+    const isNum=nc.includes(col);
+    const pct=(vals.length/DATA.length)*100;
+    const health=nullCnt===0?'cg':nullCnt<DATA.length*.05?'c-gd':'c-rd';
+    const healthTxt=nullCnt===0?'✓ To\'liq':nullCnt<DATA.length*.05?'⚡ Oz':' ⚠️ Ko\'p';
+
+    if(isNum){
+      const s=stOf(colVals(col,true));
+      const range=s.max-s.min;
+      html+=`<div class="csc" style="position:relative">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+          <div style="font-family:var(--mono);font-size:12px;color:var(--acc);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px" title="${col}">📊 ${col}</div>
+          <span class="chip c-bl" style="font-size:9px;flex-shrink:0">RAQAM</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-bottom:8px">
+          ${[['Min',fmtNum(s.min)],['Max',fmtNum(s.max)],["O'rt.",fmtNum(s.avg)],['Med.',fmtNum(s.median)],['Std',fmtNum(s.std)],["Yig'.",fmtNum(s.sum)]].map(([k,v])=>`<div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)"><span style="color:var(--t4)">${k}</span><span style="color:var(--t1);font-weight:600">${v}</span></div>`).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--mono);color:var(--t4);margin-bottom:3px">
+          <span>To'liqlik</span><span style="color:${nullCnt>0?'var(--red)':'var(--green)'}">${pct.toFixed(0)}% ${nullCnt>0?'('+nullCnt+' bo\'sh)':''}</span>
+        </div>
+        <div class="pg"><div class="pgf" style="width:${pct}%;background:linear-gradient(90deg,var(--acc),var(--acc2))"></div></div>
+      </div>`;
+    } else {
+      const unique=[...new Set(vals)];
+      const freq={};vals.forEach(v=>freq[v]=(freq[v]||0)+1);
+      const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,4);
+      html+=`<div class="csc">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+          <div style="font-family:var(--mono);font-size:12px;color:var(--acc);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px" title="${col}">📝 ${col}</div>
+          <span class="chip c-gd" style="font-size:9px;flex-shrink:0">MATN</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)"><span style="color:var(--t4)">Unikal</span><span style="color:var(--t1);font-weight:600">${unique.length.toLocaleString()}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)"><span style="color:var(--t4)">Jami</span><span style="color:var(--t1);font-weight:600">${vals.length.toLocaleString()}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03);grid-column:1/-1"><span style="color:var(--t4)">Bo'sh</span><span style="color:${nullCnt>0?'var(--red)':'var(--green)'};font-weight:600">${nullCnt} ta</span></div>
+        </div>
+        <div style="margin-bottom:8px">
+          ${top.map(([v,c])=>{
+            const pct2=(c/vals.length*100).toFixed(0);
+            return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-family:var(--mono);color:var(--t3)" title="${v}">${String(v).substring(0,16)}</div>
+              <div style="font-size:10px;font-family:var(--mono);color:var(--t4);flex-shrink:0;width:28px;text-align:right">${pct2}%</div>
+              <div style="width:50px;flex-shrink:0"><div style="height:3px;background:rgba(255,255,255,.06);border-radius:2px"><div style="height:100%;width:${pct2}%;background:var(--blue);border-radius:2px"></div></div></div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--mono);color:var(--t4);margin-bottom:3px">
+          <span>To'liqlik</span><span style="color:${nullCnt>0?'var(--red)':'var(--green)'}">${pct.toFixed(0)}%</span>
+        </div>
+        <div class="pg"><div class="pgf" style="width:${pct}%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div></div>
+      </div>`;
+    }
+  });
+
+  html+=`</div>
+  <div style="display:flex;align-items:center;gap:10px;margin:18px 0 12px">
+    <h3 style="font-size:11px;font-family:var(--mono);color:var(--t4);text-transform:uppercase;letter-spacing:1.5px">To'liq Jadval</h3>
+    <div style="flex:1;height:1px;background:var(--br)"></div>
+    <span style="font-size:10px;font-family:var(--mono);background:var(--s3);border:1px solid var(--br);color:var(--t4);padding:2px 7px;border-radius:4px">${DATA.length.toLocaleString()} qator · hammasi ko'rsatilmoqda</span>
+  </div>
+  <div class="card">
+    <div class="tw">
+      <table>
+        <thead><tr><th style="color:var(--t5)">#</th>${HDRS.map(h=>`<th title="${h}">${h.length>16?h.substring(0,14)+'…':h}</th>`).join('')}</tr></thead>
+        <tbody>${DATA.map((r,i)=>`<tr><td style="color:var(--t5);user-select:none">${i+1}</td>${HDRS.map(h=>{const v=String(r[h]||'');const isEmpty=!v||v==='';return `<td title="${v}" style="${isEmpty?'color:var(--t5);font-style:italic':''}">${isEmpty?'—':v.substring(0,30)+(v.length>30?'…':'')}</td>`;}).join('')}</tr>`).join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+
+  document.getElementById('statsGrid').innerHTML=html;
+}
+
+/* ═══════════════════════════════════════
+   CHARTS PAGE
+═══════════════════════════════════════ */
+function buildCharts(){
+  if(!DATA||!HDRS.length){
+    document.getElementById('chartsA').innerHTML='<div class="emp"><span class="ei">📊</span><p>CSV faylni yuklang</p></div>';
+    return;
+  }
+  const nc=numCols(), tc=txtCols();
+  document.getElementById('chartsA').innerHTML=`
+    <div style="display:flex;justify-content:flex-end;gap:7px;margin-bottom:14px">
+      <button class="btn btn-ghost" style="font-size:11px" onclick="exportCSV()">⬇️ CSV</button>
+      <button class="btn btn-green" style="font-size:11px" onclick="exportCleanCSV()">🧹 Tozalangan</button>
+      <button class="btn btn-acc" style="font-size:11px" onclick="exportReport()">📄 Hisobot</button>
+    </div>
+    <div class="g2">
+      <div class="cc"><div class="ct">Bar Chart</div><div class="cs">${nc[0]||tc[0]||'—'} bo'yicha top kategoriyalar</div><canvas id="xc1" height="180"></canvas></div>
+      <div class="cc"><div class="ct">Line Chart</div><div class="cs">${nc[0]||'—'} dinamikasi (birinchi 50)</div><canvas id="xc2" height="180"></canvas></div>
+    </div>
+    <div class="g2">
+      <div class="cc"><div class="ct">Doughnut Chart</div><div class="cs">${tc[0]||'—'} ulush taqsimoti</div><canvas id="xc3" height="180"></canvas></div>
+      <div class="cc"><div class="ct">${nc.length>=2?'Scatter Plot':'Area Chart'}</div><div class="cs">${nc.length>=2?nc[0]+' vs '+nc[1]:'Korrelyatsiya'}</div><canvas id="xc4" height="180"></canvas></div>
+    </div>
+    ${nc.length>2?`<div class="g2">
+      <div class="cc"><div class="ct">Multi-Line</div><div class="cs">Bir nechta ustun dinamikasi</div><canvas id="xc5" height="180"></canvas></div>
+      <div class="cc"><div class="ct">Radar</div><div class="cs">Qiymatlar taqqoslash</div><canvas id="xc6" height="180"></canvas></div>
+    </div>`:''}`;
+
+  setTimeout(()=>{
+    // Bar
+    if(nc.length>0||tc.length>0){
+      const vc=nc.length>0?nc[0]:null, lc=tc.length>0?tc[0]:null;
+      let labels, vals;
+      if(lc&&vc){
+        const grp={};DATA.forEach(r=>{const k=String(r[lc]||'N/A').substring(0,18);if(!grp[k])grp[k]=0;grp[k]+=parseFloat(r[vc])||0;});
+        const top=Object.entries(grp).sort((a,b)=>b[1]-a[1]).slice(0,12);
+        labels=top.map(x=>x[0]); vals=top.map(x=>x[1]);
+      } else if(lc){
+        const freq={};DATA.forEach(r=>{const k=String(r[lc]||'N/A').substring(0,18);freq[k]=(freq[k]||0)+1;});
+        const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,12);
+        labels=top.map(x=>x[0]); vals=top.map(x=>x[1]);
+      } else {
+        vals=colVals(nc[0],true).slice(0,12); labels=vals.map((_,i)=>'#'+(i+1));
+      }
+      mkC('xc1',{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:PAL.map(c=>c+'55'),borderColor:PAL,borderWidth:2,borderRadius:5,borderSkipped:false}]},options:COPTS});
+    }
+
+    // Line
+    if(nc.length>0){
+      const vals=colVals(nc[0],true).slice(0,50);
+      mkC('xc2',{type:'line',data:{labels:vals.map((_,i)=>i+1),datasets:[{label:nc[0],data:vals,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.12)',fill:true,tension:.4,pointRadius:2,pointHoverRadius:5,borderWidth:2.5}]},options:{...COPTS,plugins:{...COPTS.plugins,legend:{display:false}}}});
+    }
+
+    // Doughnut
+    if(tc.length>0){
+      const freq={};DATA.forEach(r=>{const k=String(r[tc[0]]||'N/A').substring(0,20);freq[k]=(freq[k]||0)+1;});
+      const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,8);
+      mkC('xc3',{type:'doughnut',data:{labels:top.map(x=>x[0]),datasets:[{data:top.map(x=>x[1]),backgroundColor:PAL.map(c=>c+'bb'),borderColor:PAL,borderWidth:2,hoverOffset:8}]},options:{...COPTS_NO_SCALE,cutout:'58%'}});
+    }
+
+    // Scatter or area
+    if(nc.length>=2){
+      const pts=DATA.slice(0,200).map(r=>({x:parseFloat(r[nc[0]]),y:parseFloat(r[nc[1]])})).filter(p=>!isNaN(p.x)&&!isNaN(p.y));
+      mkC('xc4',{type:'scatter',data:{datasets:[{label:nc[0]+' vs '+nc[1],data:pts,backgroundColor:'#8b5cf655',borderColor:'#8b5cf6',pointRadius:4,pointHoverRadius:6}]},options:{...COPTS,plugins:{...COPTS.plugins,legend:{display:false}}}});
+    } else if(nc.length===1){
+      const vals=colVals(nc[0],true).slice(0,60);
+      mkC('xc4',{type:'line',data:{labels:vals.map((_,i)=>i+1),datasets:[{data:vals,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.12)',fill:true,tension:.3,pointRadius:0,borderWidth:2}]},options:{...COPTS,plugins:{...COPTS.plugins,legend:{display:false}}}});
+    }
+
+    // Multi-line
+    if(nc.length>2){
+      const samp=DATA.slice(0,30);
+      const datasets=nc.slice(0,4).map((col,i)=>({label:col,data:samp.map(r=>parseFloat(r[col])||0),borderColor:PAL[i],backgroundColor:PAL[i]+'22',fill:false,tension:.35,pointRadius:2,borderWidth:2}));
+      mkC('xc5',{type:'line',data:{labels:samp.map((_,i)=>i+1),datasets},options:{...COPTS,plugins:{...COPTS.plugins,legend:{display:true,labels:{color:'#94a3b8',font:{family:'JetBrains Mono',size:10},boxWidth:10}}}}});
+
+      // Radar — averages
+      const avgs=nc.slice(0,6).map(col=>{const v=colVals(col,true);return v.reduce((a,b)=>a+b,0)/v.length||0;});
+      const maxV=Math.max(...avgs)||1;
+      mkC('xc6',{type:'radar',data:{labels:nc.slice(0,6).map(c=>c.substring(0,12)),datasets:[{label:"O'rtacha",data:avgs.map(v=>v/maxV*100),backgroundColor:'rgba(232,98,42,.2)',borderColor:'#e8622a',pointBackgroundColor:'#e8622a',pointRadius:4,borderWidth:2}]},options:{responsive:true,animation:{duration:700},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(11,13,22,.95)',bodyFont:{family:'JetBrains Mono',size:11}}},scales:{r:{ticks:{color:'#64748b',font:{family:'JetBrains Mono',size:9},backdropColor:'transparent'},grid:{color:'rgba(255,255,255,.06)'},angleLines:{color:'rgba(255,255,255,.06)'},pointLabels:{color:'#94a3b8',font:{family:'JetBrains Mono',size:10}}}}}});
+    }
+  },50);
+}
+
+/* ═══════════════════════════════════════
+   EXPORT FUNCTIONS
+═══════════════════════════════════════ */
+function dlBlob(blob, filename){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},200);
+}
+
+function getFileName(ext){
+  const base=(currentFileName||'datamind').replace(/\.[^.]+$/,'').replace(/[^a-zA-Z0-9_\-]/g,'_');
+  return base+'_'+new Date().toISOString().slice(0,10)+'.'+ext;
+}
+
+function exportCSV(){
+  if(!DATA||!HDRS.length){notify('⚠️ Ma\'lumot yo\'q','error');return;}
+  const BOM='\uFEFF';
+  const rows=[HDRS.join(','),...DATA.map(r=>HDRS.map(h=>{
+    const v=String(r[h]??'');
+    return (v.includes(',')||v.includes('"')||v.includes('\n'))?`"${v.replace(/"/g,'""')}"`:v;
+  }).join(','))];
+  const blob=new Blob([BOM+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  dlBlob(blob, getFileName('csv'));
+  notify('✅ CSV yuklab olindi — '+DATA.length.toLocaleString()+' qator','success');
+}
+
+function exportJSON(){
+  if(!DATA||!HDRS.length){notify('⚠️ Ma\'lumot yo\'q','error');return;}
+  const blob=new Blob([JSON.stringify(DATA,null,2)],{type:'application/json'});
+  dlBlob(blob, getFileName('json'));
+  notify('✅ JSON yuklab olindi','success');
+}
+
+function exportCleanCSV(){
+  if(!DATA||!HDRS.length){notify('⚠️ Ma\'lumot yo\'q','error');return;}
+  // Remove rows where ANY cell is empty
+  const clean=DATA.filter(r=>HDRS.every(h=>r[h]!==''&&r[h]!=null&&r[h]!==undefined));
+  const removed=DATA.length-clean.length;
+  const BOM='\uFEFF';
+  const rows=[HDRS.join(','),...clean.map(r=>HDRS.map(h=>{
+    const v=String(r[h]??'');
+    return (v.includes(',')||v.includes('"')||v.includes('\n'))?`"${v.replace(/"/g,'""')}"`:v;
+  }).join(','))];
+  const blob=new Blob([BOM+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  dlBlob(blob, getFileName('csv').replace('.csv','_tozalangan.csv'));
+  notify(`✅ Tozalangan CSV: ${clean.length.toLocaleString()} qator (${removed} bo'sh qator o'chirildi)`,'success');
+}
+
+function exportReport(){
+  if(!DATA||!HDRS.length){notify('⚠️ Ma\'lumot yo\'q','error');return;}
+  const nc=numCols(),tc=txtCols();
+  let nulls=0; DATA.forEach(r=>HDRS.forEach(h=>{if(!r[h]||r[h]==='')nulls++;}));
+  const comp=((1-nulls/(DATA.length*HDRS.length))*100).toFixed(1);
+  const now=new Date().toLocaleString();
+  const fname=currentFileName||'Ma\'lumot';
+
+  const statsHtml=HDRS.map(col=>{
+    const vals=colVals(col), isNum=nc.includes(col), nullCnt=DATA.length-vals.length;
+    if(isNum){
+      const s=stOf(colVals(col,true));
+      return `<tr><td><b>${col}</b></td><td><span class="badge num">RAQAM</span></td><td>${fmtNum(s.min)}</td><td>${fmtNum(s.max)}</td><td>${fmtNum(s.avg)}</td><td>${fmtNum(s.median)}</td><td>${fmtNum(s.std)}</td><td class="${nullCnt>0?'red':'green'}">${nullCnt}</td></tr>`;
+    } else {
+      const unique=[...new Set(vals)];
+      const freq={};vals.forEach(v=>freq[v]=(freq[v]||0)+1);
+      const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([v,c])=>`${v}(${c})`).join(', ');
+      return `<tr><td><b>${col}</b></td><td><span class="badge txt">MATN</span></td><td colspan="4">Unikal: ${unique.length} · Top: ${top}</td><td>—</td><td class="${nullCnt>0?'red':'green'}">${nullCnt}</td></tr>`;
+    }
+  }).join('');
+
+  const tableRows=DATA.map((r,i)=>`<tr><td class="rn">${i+1}</td>${HDRS.map(h=>{
+    const v=String(r[h]??'');
+    return `<td class="${!v?'empty':''}">${!v?'—':v.substring(0,40)+(v.length>40?'…':'')}</td>`;
+  }).join('')}</tr>`).join('');
+
+  const html=`<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DataMind Hisobot — ${fname}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f8fafc;color:#1e293b;font-size:14px}
+.header{background:linear-gradient(135deg,#e8622a 0%,#7c1d06 100%);color:#fff;padding:36px 48px 32px}
+.header h1{font-size:1.8rem;font-weight:800;letter-spacing:-.5px;margin-bottom:6px}
+.header .meta{opacity:.8;font-size:13px;display:flex;gap:20px;flex-wrap:wrap}
+.header .meta span{display:flex;align-items:center;gap:6px}
+.body{padding:36px 48px;max-width:1400px}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:32px}
+.kpi{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.kpi .v{font-size:1.7rem;font-weight:800;color:#e8622a;letter-spacing:-.5px}
+.kpi .l{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+.kpi.bad .v{color:#ef4444}
+.kpi.good .v{color:#10b981}
+h2{font-size:15px;font-weight:700;color:#334155;margin:28px 0 14px;padding-bottom:8px;border-bottom:2px solid #e2e8f0;display:flex;align-items:center;gap:8px}
+.tbl-wrap{overflow-x:auto;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+table{width:100%;border-collapse:collapse;font-size:12px;background:#fff}
+thead th{background:#f1f5f9;padding:10px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#64748b;border-bottom:2px solid #e2e8f0;white-space:nowrap;position:sticky;top:0}
+tbody td{padding:8px 14px;border-bottom:1px solid #f8fafc;color:#475569;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+tbody tr:nth-child(even) td{background:#fafbfc}
+tbody tr:hover td{background:#f0f9ff}
+td.rn{color:#cbd5e1;user-select:none;width:40px;text-align:right;padding-right:8px}
+td.empty{color:#cbd5e1;font-style:italic}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.5px}
+.badge.num{background:#dbeafe;color:#1d4ed8}
+.badge.txt{background:#fef3c7;color:#92400e}
+td.red{color:#ef4444;font-weight:700}
+td.green{color:#10b981;font-weight:700}
+.insights{background:linear-gradient(135deg,#fff7ed,#fef3c7);border:1px solid #fed7aa;border-radius:12px;padding:16px 20px;margin-bottom:28px}
+.insights h3{font-size:13px;font-weight:700;color:#9a3412;margin-bottom:10px}
+.ins-list{display:flex;flex-direction:column;gap:5px}
+.ins-item{font-size:13px;color:#78350f;display:flex;align-items:baseline;gap:6px}
+.footer{margin-top:40px;padding:20px 0;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center}
+.print-btn{position:fixed;bottom:24px;right:24px;background:#e8622a;color:#fff;border:none;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(232,98,42,.35);font-family:inherit}
+.print-btn:hover{background:#c05020}
+@media print{.print-btn{display:none}.body{padding:20px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📊 ${fname} — Tahlil Hisoboti</h1>
+  <div class="meta">
+    <span>📅 ${now}</span>
+    <span>📋 ${DATA.length.toLocaleString()} qator</span>
+    <span>📐 ${HDRS.length} ustun</span>
+    <span>✅ To'liqlik: ${comp}%</span>
+    ${nulls>0?`<span>⚠️ ${nulls.toLocaleString()} bo'sh qiymat</span>`:'<span>🟢 Barcha qiymatlar to\'liq</span>'}
+  </div>
+</div>
+<div class="body">
+  <div class="kpi-row">
+    <div class="kpi"><div class="v">${DATA.length.toLocaleString()}</div><div class="l">Jami Qator</div></div>
+    <div class="kpi"><div class="v">${HDRS.length}</div><div class="l">Ustunlar</div></div>
+    <div class="kpi ${parseFloat(comp)>=90?'good':parseFloat(comp)>=70?'':'bad'}"><div class="v">${comp}%</div><div class="l">To'liqlik</div></div>
+    <div class="kpi ${nulls>0?'bad':'good'}"><div class="v">${nulls.toLocaleString()}</div><div class="l">Bo'sh Qiymat</div></div>
+    <div class="kpi"><div class="v">${nc.length}</div><div class="l">Raqamli Ustun</div></div>
+    <div class="kpi"><div class="v">${tc.length}</div><div class="l">Matnli Ustun</div></div>
+  </div>
+
+  <h2>📈 Ustunlar Statistikasi</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Ustun nomi</th><th>Tur</th><th>Min</th><th>Max</th><th>O'rtacha</th><th>Median</th><th>Std</th><th>Bo'sh</th></tr></thead>
+      <tbody>${statsHtml}</tbody>
+    </table>
+  </div>
+
+  <h2>📋 To'liq Ma'lumot Jadvali (${DATA.length.toLocaleString()} qator)</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>#</th>${HDRS.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+  </div>
+
+  <div class="footer">DataMind Shaxsiy Workspace · ${now} · Barcha huquqlar himoyalangan</div>
+</div>
+<button class="print-btn" onclick="window.print()">🖨️ Chop etish / PDF</button>
+</body></html>`;
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  dlBlob(blob, getFileName('html').replace('.html','_hisobot.html'));
+  notify('✅ Hisobot yuklab olindi! Brauzerda oching → Chop etish → PDF saqlang','success');
+}
+
+/* ═══════════════════════════════════════
+   NOTEBOOK — localStorage
+═══════════════════════════════════════ */
+let notes=[], activeId=null, saveTimer=null;
+
+const TAG_COLORS={work:'#e8622a',idea:'#f59e0b',learn:'#3b82f6',sql:'#06b6d4',excel:'#10b981',goal:'#8b5cf6',result:'#10b981',problem:'#ef4444',note:'#ec4899','':"#64748b"};
+const TAG_LABELS={work:'💼 Ish',idea:'💡 G\'oya',learn:'📚 O\'rganish',sql:'🗄️ SQL',excel:'📊 Excel',goal:'🎯 Maqsad',result:'✅ Natija',problem:'⚠️ Muammo',note:'📝 Qayd','':"🏷️ Tag"};
+
+function loadNotes(){
+  try{ notes=JSON.parse(localStorage.getItem('dm_notes')||'[]'); }catch{ notes=[]; }
+  document.getElementById('kv5').textContent=notes.length;
+}
+function saveNotes(){
+  localStorage.setItem('dm_notes',JSON.stringify(notes));
+  document.getElementById('kv5').textContent=notes.length;
+  document.getElementById('nbCount').textContent=notes.length+' daftar';
+}
+
+function renderNotes(){
+  const q=(document.getElementById('nbSrch')?.value||'').toLowerCase();
+  const filtered=q?notes.filter(n=>(n.title||'').toLowerCase().includes(q)||(n.content||'').toLowerCase().includes(q)):notes;
+  const el=document.getElementById('nbList');
+  if(!el) return;
+  if(!filtered.length){
+    el.innerHTML=`<div style="padding:20px;text-align:center;font-size:12px;font-family:var(--mono);color:var(--t4)">${q?'🔍 Topilmadi':'📝 Daftar yo\'q'}</div>`;
+    return;
+  }
+  el.innerHTML=filtered.map(n=>{
+    const tc=TAG_COLORS[n.tag]||'#64748b';
+    const wc=(n.content||'').split(/\s+/).filter(Boolean).length;
+    return `<div class="nb-item ${activeId===n.id?'act':''}" onclick="selectNote('${n.id}')">
+      <div class="nb-it">${n.title||'Nomsiz daftar'}</div>
+      <div class="nb-id">${new Date(n.updatedAt).toLocaleDateString()} · ${wc} so'z</div>
+      ${n.content?`<div class="nb-ip">${(n.content||'').substring(0,55)}...</div>`:''}
+      ${n.tag?`<span class="nb-itag" style="background:${tc}22;color:${tc}">${TAG_LABELS[n.tag]||n.tag}</span>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('nbCount').textContent=notes.length+' daftar';
+}
+
+function filterNotes(){ renderNotes(); }
+
+function selectNote(id){
+  activeId=id;
+  const n=notes.find(x=>x.id===id);
+  if(!n) return;
+  document.getElementById('nbEmpty').style.display='none';
+  const ed = document.getElementById('nbEdContent');
+  ed.style.display='flex';
+  ed.style.flexDirection='column';
+  document.getElementById('nbTitle').value=n.title||'';
+  document.getElementById('nbContent').value=n.content||'';
+  document.getElementById('nbTag').value=n.tag||'';
+  updateWC();
+  document.getElementById('nbTs').textContent=new Date(n.updatedAt).toLocaleString();
+  document.getElementById('nbStatus').textContent='● Saqlandi';
+  document.getElementById('nbStatus').className='saved';
+  renderNotes();
+  // Mobile: show editor
+  document.getElementById('nbWrap')?.classList.add('nb-editing');
+}
+
+function newNote(){
+  const n={id:'n'+Date.now(),title:'',content:'',tag:'',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+  notes.unshift(n); saveNotes(); renderNotes(); selectNote(n.id);
+  setTimeout(()=>document.getElementById('nbTitle')?.focus(),50);
+}
+
+function saveNote(){
+  if(!activeId) return;
+  const i=notes.findIndex(n=>n.id===activeId);
+  if(i<0) return;
+  notes[i].title=document.getElementById('nbTitle')?.value||'';
+  notes[i].content=document.getElementById('nbContent')?.value||'';
+  notes[i].tag=document.getElementById('nbTag')?.value||'';
+  notes[i].updatedAt=new Date().toISOString();
+  saveNotes(); renderNotes();
+  document.getElementById('nbStatus').textContent='● Saqlandi';
+  document.getElementById('nbStatus').className='saved';
+  document.getElementById('nbTs').textContent=new Date().toLocaleString();
+}
+
+function autoSave(){
+  document.getElementById('nbStatus').textContent='● Yozilmoqda...';
+  document.getElementById('nbStatus').className='saving';
+  clearTimeout(saveTimer); saveTimer=setTimeout(saveNote, 700);
+  updateWC();
+}
+
+function updateWC(){
+  const txt=document.getElementById('nbContent')?.value||'';
+  const wc=txt.split(/\s+/).filter(Boolean).length;
+  document.getElementById('nbWc').textContent=`${wc} so'z · ${txt.length} belgi`;
+}
+
+function delNote(){
+  if(!activeId) return;
+  const n=notes.find(x=>x.id===activeId);
+  if(!confirm(`"${n?.title||'Nomsiz daftar'}" ni o'chirasizmi?`)) return;
+  notes=notes.filter(x=>x.id!==activeId);
+  activeId=null;
+  saveNotes(); renderNotes();
+  document.getElementById('nbEmpty').style.display='flex';
+  document.getElementById('nbEdContent').style.display='none';
+  notify('🗑️ Daftar o\'chirildi','info');
+}
+
+function exportNote(){
+  const n=notes.find(x=>x.id===activeId);
+  if(!n){notify('⚠️ Daftar tanlanmagan','error');return;}
+  const txt=`# ${n.title||'Nomsiz daftar'}\nTag: ${n.tag||'—'}\nYaratildi: ${new Date(n.createdAt).toLocaleString()}\nYangilandi: ${new Date(n.updatedAt).toLocaleString()}\n\n${'─'.repeat(40)}\n\n${n.content||''}`;
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const fname=(n.title||'daftar').replace(/[^a-zA-Z0-9а-яА-ЯёЁ\u0400-\u04FF\s]/g,'').replace(/\s+/g,'_').substring(0,50)||'daftar';
+  dlBlob(blob, fname+'.txt');
+  notify('✅ Daftar yuklab olindi: '+fname+'.txt','success');
+}
+
+function exportAllNotes(){
+  if(!notes.length){notify('⚠️ Daftar yo\'q','error');return;}
+  const blob=new Blob([JSON.stringify(notes,null,2)],{type:'application/json'});
+  const date=new Date().toISOString().slice(0,10);
+  dlBlob(blob,'datamind_daftarlar_'+date+'.json');
+  notify('✅ '+notes.length+' ta daftar eksport qilindi','success');
+}
+
+function importNotes(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const imp=JSON.parse(ev.target.result);
+      if(!Array.isArray(imp)) throw new Error();
+      const merged=[...imp,...notes.filter(n=>!imp.find(i=>i.id===n.id))];
+      notes=merged; saveNotes(); renderNotes();
+      notify(`✅ ${imp.length} ta daftar import qilindi`,'success');
+    } catch{ notify('⚠️ Fayl formati noto\'g\'ri','error'); }
+  };
+  r.readAsText(f); e.target.value='';
+}
+
+function clearAllNotes(){
+  if(!notes.length){notify('⚠️ Daftar yo\'q','error');return;}
+  if(!confirm(`Barcha ${notes.length} ta daftarni o'chirasizmi? Bu amalni qaytarib bo'lmaydi!`)) return;
+  notes=[]; saveNotes(); renderNotes();
+  activeId=null;
+  document.getElementById('nbEmpty').style.display='flex';
+  document.getElementById('nbEdContent').style.display='none';
+  notify('🗑️ Barcha daftarlar o\'chirildi','info');
+}
+
+function ins(before,after){
+  const ta=document.getElementById('nbContent');
+  if(!ta) return;
+  const s=ta.selectionStart, e=ta.selectionEnd;
+  const sel=ta.value.substring(s,e);
+  ta.value=ta.value.substring(0,s)+before+sel+after+ta.value.substring(e);
+  ta.selectionStart=s+before.length;
+  ta.selectionEnd=s+before.length+sel.length;
+  ta.focus(); autoSave();
+}
+
+/* ═══════════════════════════════════════
+   SQL COPY
+═══════════════════════════════════════ */
+function cpSql(btn){
+  const pre=btn.parentElement.querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(()=>{
+    btn.textContent='COPIED!'; btn.style.color='var(--green)';
+    setTimeout(()=>{btn.textContent='COPY'; btn.style.color='';},2000);
+  });
+}
+
+/* ═══════════════════════════════════════
+   CURRENCY CONVERTER
+═══════════════════════════════════════ */
+const RATES = {
+  USD:  1,
+  UZS:  12094,
+  BTC:  1/74294,
+  ETH:  1/2335,
+  BNB:  1/681,
+  SOL:  1/95,
+  XRP:  1/1.52,
+  USDT: 1
+};
+const SYMBOLS = {USD:'$',UZS:'so\'m',BTC:'₿',ETH:'Ξ',BNB:'◈',SOL:'◎',XRP:'✦',USDT:'₮'};
+const NAMES = {USD:'Dollar',UZS:'So\'m',BTC:'Bitcoin',ETH:'Ethereum',BNB:'BNB',SOL:'Solana',XRP:'XRP',USDT:'Tether'};
+
+function convert(){
+  const amt = parseFloat(document.getElementById('convAmt')?.value) || 0;
+  const from = document.getElementById('convFrom')?.value || 'USD';
+  const to   = document.getElementById('convTo')?.value   || 'UZS';
+  if(amt <= 0){ document.getElementById('convResult').textContent='—'; return; }
+
+  // Convert: amt -> USD -> target
+  const inUSD = amt / RATES[from];
+  const result = inUSD * RATES[to];
+
+  let display;
+  if(to === 'BTC' || to === 'ETH')       display = result.toFixed(8)+' '+to;
+  else if(to === 'SOL' || to === 'BNB')  display = result.toFixed(4)+' '+to;
+  else if(to === 'XRP')                  display = result.toFixed(2)+' '+to;
+  else if(to === 'UZS')                  display = Math.round(result).toLocaleString()+' so\'m';
+  else                                   display = '$'+result.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  document.getElementById('convResult').textContent = display;
+
+  // Info line
+  const rate = RATES[to] / RATES[from];
+  let infoText = '';
+  if(from==='USD'&&to==='UZS')      infoText = '1 USD = 12,094 UZS · CBU kursi';
+  else if(from==='UZS'&&to==='USD') infoText = '1 USD = 12,094 UZS · CBU kursi';
+  else if(from==='USD'&&to==='BTC') infoText = '1 BTC = $74,294 · theblock.co';
+  else if(from==='BTC'&&to==='USD') infoText = '1 BTC = $74,294 · 18.03.2026';
+  else if(from==='USD'&&to==='ETH') infoText = '1 ETH = $2,335 · 18.03.2026';
+  else                               infoText = `1 ${NAMES[from]} = ${(1/rate)<1?(1/rate).toFixed(6):(1/rate).toLocaleString(undefined,{maximumFractionDigits:4})} ${NAMES[to]}`;
+  document.getElementById('convInfo').textContent = '📡 Kurs: '+infoText+' · Narxlar taxminiy, real vaqtda yangilanmaydi';
+}
+
+function swapConv(){
+  const f = document.getElementById('convFrom');
+  const t = document.getElementById('convTo');
+  const tmp = f.value;
+  f.value = t.value;
+  t.value = tmp;
+  convert();
+}
+
+// Init converter on page load
+setTimeout(convert, 100);
+
+function tck(el){ el.classList.toggle('done'); }
+
+/* ═══════════════════════════════════════
+   NOTIFICATIONS
+═══════════════════════════════════════ */
+function notify(msg,type='info'){
+  const a=document.getElementById('notif');
+  const d=document.createElement('div');
+  const c={success:'var(--green)',error:'var(--red)',info:'var(--blue)'};
+  d.className='nitem';
+  d.innerHTML=`<div style="width:6px;height:6px;border-radius:50%;background:${c[type]};flex-shrink:0"></div><span style="color:var(--t2)">${msg}</span>`;
+  a.appendChild(d);
+  setTimeout(()=>{d.style.opacity='0';d.style.transform='translateX(10px)';d.style.transition='all .28s';setTimeout(()=>d.remove(),280);},3000);
+}
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+loadCSVFiles();
+loadNotes();
+renderCSVList();
+renderNotes();
+</script>
+</body>
+</html>
